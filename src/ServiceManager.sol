@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "./Permissions.sol";
 import "./Precompiles.sol";
 
-/// Created by the service requester (service instance creator)
+/// @dev Created by the service requester (service instance creator)
 contract ServiceManagerBase is RootChainEnabled, ServiceQuerier {
     address TASK_CREATION_PRECOMPILE = address(0x01);
     uint256 serviceId;
