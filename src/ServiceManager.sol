@@ -4,7 +4,8 @@ pragma solidity ^0.8.13;
 import "./Permissions.sol";
 import "./Precompiles.sol";
 
-/// @dev Created by the service requester (service instance creator)
+/// @dev Created by the service blueprint designer (gadget developer)
+/// @dev Deployed by the service requester (service instance creator)
 contract ServiceManagerBase is RootChainEnabled, ServiceQuerier {
     address TASK_CREATION_PRECOMPILE = address(0x01);
     uint256 serviceId;
@@ -27,5 +28,13 @@ contract ServiceManagerBase is RootChainEnabled, ServiceQuerier {
             abi.encodeWithSignature("submitTaskResult(uint256,bytes)", callId, result)
         );
         require(success, "Task result submission failed");
+    }
+
+    function submitMisbehaviorToRuntime(uint256 callId, bytes memory misbehavior) internal {
+        // Submit the misbehavior
+        (bool success, bytes memory data) = TASK_CREATION_PRECOMPILE.delegatecall(
+            abi.encodeWithSignature("submitMisbehavior(uint256,bytes)", callId, misbehavior)
+        );
+        require(success, "Misbehavior submission failed");
     }
 }

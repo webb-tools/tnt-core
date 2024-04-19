@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "../ServiceManager.sol";
 
+//
 contract DfnsCggmp21ThresholdSignatureService is ServiceManagerBase, PermittedCaller {
     uint8 constant DKG_TASK_JOB_ID = 0;
     uint8 constant SIGNATURE_TASK_JOB_ID = 1;
@@ -20,5 +21,9 @@ contract DfnsCggmp21ThresholdSignatureService is ServiceManagerBase, PermittedCa
 
     function createSignatureTask() public onlyPermittedCaller {
         submitJobToRuntime(SIGNATURE_TASK_JOB_ID, "");
+    }
+
+    function submitMisbehavior(uint256 callId, bytes memory misbehavior) public {
+        submitMisbehaviorToRuntime(callId, misbehavior);
     }
 }
