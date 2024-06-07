@@ -5,12 +5,12 @@ pragma solidity >=0.8.19;
 import { Test, stdError } from "forge-std/Test.sol";
 import { TestHelpers } from "test/helpers/Helpers.sol";
 import { IERC20 } from "core/lst/interfaces/IERC20.sol";
-import { TToken } from "core/lst/tendertoken/TToken.sol";
+import { TgToken } from "core/lst/tendertoken/TgToken.sol";
 
 // solhint-disable func-name-mixedcase
 // solhint-disable no-empty-blocks
 
-contract TokenSetup is TestHelpers, Test, TToken {
+contract TokenSetup is TestHelpers, Test, TgToken {
     uint256 public MAX_UINT_SQRT = sqrt(type(uint256).max - 1);
 
     function name() public view override returns (string memory) { }
@@ -22,8 +22,8 @@ contract TokenSetup is TestHelpers, Test, TToken {
     address public account3 = vm.addr(3);
 }
 
-// Inheriting TTokenHarness only to get events
-contract TTokenTest is TokenSetup {
+// Inheriting TgTokenHarness only to get events
+contract TgTokenTest is TokenSetup {
     function test_Metadata() public {
         assertEq(decimals(), uint8(18), "invalid decimals");
     }
@@ -208,7 +208,7 @@ contract TTokenTest is TokenSetup {
         (uint8 v, bytes32 r, bytes32 s) =
             _signPermit(vm, DOMAIN_SEPARATOR(), privateKey, signer, account2, amount, 0, block.timestamp + 10_000);
 
-        vm.expectRevert(abi.encodeWithSelector(TToken.InvalidSignature.selector));
+        vm.expectRevert(abi.encodeWithSelector(TgToken.InvalidSignature.selector));
         this.permit(account1, account2, amount, block.timestamp + 10_000, v, r, s);
     }
 
@@ -220,7 +220,7 @@ contract TTokenTest is TokenSetup {
         (uint8 v, bytes32 r, bytes32 s) =
             _signPermit(vm, DOMAIN_SEPARATOR(), privateKey, signer, account2, amount, 0, block.timestamp);
 
-        vm.expectRevert(abi.encodeWithSelector(TToken.InvalidSignature.selector));
+        vm.expectRevert(abi.encodeWithSelector(TgToken.InvalidSignature.selector));
         this.permit(signer, account2, amount, block.timestamp + 1, v, r, s);
     }
 
@@ -231,7 +231,7 @@ contract TTokenTest is TokenSetup {
             _signPermit(vm, DOMAIN_SEPARATOR(), privateKey, signer, account2, 1 ether, 0, block.timestamp);
 
         vm.warp(block.timestamp + 1);
-        vm.expectRevert(abi.encodeWithSelector(TToken.InvalidSignature.selector));
+        vm.expectRevert(abi.encodeWithSelector(TgToken.InvalidSignature.selector));
         this.permit(signer, account2, 1 ether, block.timestamp, v, r, s);
     }
 
@@ -241,7 +241,7 @@ contract TTokenTest is TokenSetup {
         (uint8 v, bytes32 r, bytes32 s) =
             _signPermit(vm, DOMAIN_SEPARATOR(), privateKey, signer, account2, 1 ether, 1, block.timestamp);
 
-        vm.expectRevert(abi.encodeWithSelector(TToken.InvalidSignature.selector));
+        vm.expectRevert(abi.encodeWithSelector(TgToken.InvalidSignature.selector));
         this.permit(signer, account2, 1 ether, block.timestamp, v, r, s);
     }
 
@@ -254,7 +254,7 @@ contract TTokenTest is TokenSetup {
             _signPermit(vm, DOMAIN_SEPARATOR(), privateKey, signer, account2, amount, 0, block.timestamp + 10_000);
         this.permit(signer, account2, amount, block.timestamp + 10_000, v, r, s);
 
-        vm.expectRevert(abi.encodeWithSelector(TToken.InvalidSignature.selector));
+        vm.expectRevert(abi.encodeWithSelector(TgToken.InvalidSignature.selector));
         this.permit(signer, account2, amount, block.timestamp + 10_000, v, r, s);
     }
 
@@ -285,7 +285,7 @@ contract TTokenTest is TokenSetup {
     }
 
     function test_Mint_RevertsIfZeroAmount() public {
-        vm.expectRevert(abi.encodeWithSelector(TToken.ZeroAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(TgToken.ZeroAmount.selector));
         _mint(account1, 0);
     }
 
@@ -325,7 +325,7 @@ contract TTokenTest is TokenSetup {
     }
 
     function test_Burn_RevertIfZeroAmount() public {
-        vm.expectRevert(abi.encodeWithSelector(TToken.ZeroAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(TgToken.ZeroAmount.selector));
         _burn(account1, 0);
     }
 
@@ -346,7 +346,7 @@ contract TTokenTest is TokenSetup {
         Storage storage $ = _loadStorage();
         $._totalSupply = 4 ether;
 
-        vm.expectRevert(TToken.ZeroAmount.selector);
+        vm.expectRevert(TgToken.ZeroAmount.selector);
         _burn(account2, 1);
     }
 }

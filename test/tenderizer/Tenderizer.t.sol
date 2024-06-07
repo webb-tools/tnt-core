@@ -10,7 +10,7 @@ import { Adapter, TenderizerHarness } from "test/tenderizer/Tenderizer.harness.s
 import { AdapterDelegateCall } from "core/lst/adapters/Adapter.sol";
 import { TenderizerEvents } from "core/lst/tenderizer/TenderizerBase.sol";
 import { StaticCallFailed } from "core/lst/utils/StaticCall.sol";
-import { TToken } from "core/lst/tendertoken/TToken.sol";
+import { TgToken } from "core/lst/tendertoken/TgToken.sol";
 import { Unlocks } from "core/lst/unlocks/Unlocks.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 import { ClonesWithImmutableArgs } from "clones/ClonesWithImmutableArgs.sol";
@@ -120,7 +120,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.prank(account1);
         vm.expectCall(adapter, abi.encodeCall(Adapter.rebase, (validator, amount)));
-        vm.expectCall(address(tenderizer), abi.encodeCall(TToken.transfer, (account2, amount)));
+        vm.expectCall(address(tenderizer), abi.encodeCall(TgToken.transfer, (account2, amount)));
         tenderizer.transfer(account2, amount);
     }
 
@@ -130,7 +130,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.mockCall(adapter, abi.encodeCall(Adapter.rebase, (validator, amount)), abi.encode(amount));
         vm.expectCall(adapter, abi.encodeCall(Adapter.rebase, (validator, amount)));
-        vm.expectCall(address(tenderizer), abi.encodeCall(TToken.transferFrom, (account1, account2, amount)));
+        vm.expectCall(address(tenderizer), abi.encodeCall(TgToken.transferFrom, (account1, account2, amount)));
         vm.prank(account1);
         tenderizer.approve(account2, amount);
         vm.prank(account2);
@@ -173,7 +173,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
     function test_Deposit_RevertIfZeroAmount() public {
         vm.mockCall(adapter, abi.encodeCall(Adapter.rebase, (validator, 0)), abi.encode(0));
         vm.mockCall(adapter, abi.encodeCall(Adapter.stake, (validator, 0)), abi.encode(0));
-        vm.expectRevert(TToken.ZeroAmount.selector);
+        vm.expectRevert(TgToken.ZeroAmount.selector);
         tenderizer.deposit(account1, 0);
     }
 
@@ -243,7 +243,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
     function test_Unlock_RevertIfZeroAmount() public {
         _unlockPreReq(account1, 1 ether, 0, 0);
-        vm.expectRevert(abi.encodeWithSelector(TToken.ZeroAmount.selector));
+        vm.expectRevert(abi.encodeWithSelector(TgToken.ZeroAmount.selector));
         tenderizer.unlock(0);
     }
 

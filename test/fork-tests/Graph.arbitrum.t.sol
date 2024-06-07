@@ -153,7 +153,7 @@ contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
         Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(GRT), INDEXER_1)));
         mintGRT(address(this), depositAmount);
         GRT.approve(address(tenderizer), depositAmount);
-        uint256 tTokenOut = tenderizer.deposit(address(this), depositAmount);
+        uint256 tgTokenOut = tenderizer.deposit(address(this), depositAmount);
 
         vm.expectEmit();
         emit Unlock(address(this), unstakeAmount, 1);
@@ -161,8 +161,8 @@ contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
 
         uint256 unlockID = tenderizer.unlock(unstakeAmount);
         assertEq(unlockID, 1, "unlockID incorrect");
-        assertEq(tenderizer.totalSupply(), tTokenOut - unstakeAmount, "total supply incorrect");
-        assertEq(tenderizer.balanceOf(address(this)), tTokenOut - unstakeAmount, "balance incorrect");
+        assertEq(tenderizer.totalSupply(), tgTokenOut - unstakeAmount, "total supply incorrect");
+        assertEq(tenderizer.balanceOf(address(this)), tgTokenOut - unstakeAmount, "balance incorrect");
         IGraphStaking.Delegation memory delegation = GRAPH_STAKING.getDelegation(INDEXER_1, address(tenderizer));
         uint256 actualUnstakedAmount = unstakeAmount * delPool.shares / delPool.tokens * delPool.tokens / delPool.shares;
         assertEq(delegation.tokensLocked, actualUnstakedAmount, "tokens locked incorrect");
@@ -208,7 +208,7 @@ contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
 
         mintGRT(address(this), depositAmount);
         GRT.approve(address(tenderizer), depositAmount);
-        uint256 tTokenOut = tenderizer.deposit(address(this), depositAmount);
+        uint256 tgTokenOut = tenderizer.deposit(address(this), depositAmount);
         vm.roll(block.number + epochLength);
         // ======================================
 
@@ -254,7 +254,7 @@ contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
             uint256 totalStaked = delShares * delPool.tokens / delPool.shares;
             assertEq(tenderizer.totalSupply(), totalStaked, "total supply incorrect");
             assertEq(tenderizer.balanceOf(address(this)), totalStaked, "balance incorrect");
-            assertTrue(tenderizer.balanceOf(address(this)) > tTokenOut, "balance not greater than before");
+            assertTrue(tenderizer.balanceOf(address(this)) > tgTokenOut, "balance not greater than before");
         }
     }
 

@@ -2,8 +2,8 @@
 
 pragma solidity >=0.8.19;
 
-abstract contract TTokenStorage {
-    uint256 private constant STORAGE = uint256(keccak256("xyz.tenderize.tToken.storage.location")) - 1;
+abstract contract TgTokenStorage {
+    uint256 private constant STORAGE = uint256(keccak256("xyz.tenderize.tgToken.storage.location")) - 1;
 
     struct Storage {
         uint256 _totalShares;

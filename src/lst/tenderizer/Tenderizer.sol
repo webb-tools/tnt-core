@@ -9,7 +9,7 @@ import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
 import { Adapter, AdapterDelegateCall } from "core/lst/adapters/Adapter.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 import { TenderizerImmutableArgs, TenderizerEvents } from "core/lst/tenderizer/TenderizerBase.sol";
-import { TToken } from "core/lst/tendertoken/TToken.sol";
+import { TgToken } from "core/lst/tendertoken/TgToken.sol";
 import { Multicall } from "core/lst/utils/Multicall.sol";
 import { SelfPermit } from "core/lst/utils/SelfPermit.sol";
 import { _staticcall } from "core/lst/utils/StaticCall.sol";
@@ -21,7 +21,7 @@ import { addressToString } from "core/lst/utils/Utils.sol";
  * @notice Liquid staking vault for native liquid staking
  * @dev Uses full type safety and unstructured storage
  */
-contract Tenderizer is TenderizerImmutableArgs, TenderizerEvents, TToken, Multicall, SelfPermit {
+contract Tenderizer is TenderizerImmutableArgs, TenderizerEvents, TgToken, Multicall, SelfPermit {
     error InsufficientAssets();
 
     using AdapterDelegateCall for Adapter;
@@ -36,31 +36,31 @@ contract Tenderizer is TenderizerImmutableArgs, TenderizerEvents, TToken, Multic
     receive() external payable { }
     fallback() external payable { }
 
-    // @inheritdoc TToken
+    // @inheritdoc TgToken
     function name() external view override returns (string memory) {
         return string.concat("tender ", _baseSymbol());
     }
 
-    // @inheritdoc TToken
+    // @inheritdoc TgToken
     function symbol() external view override returns (string memory) {
         return string.concat("t", _baseSymbol());
     }
 
-    // @inheritdoc TToken
+    // @inheritdoc TgToken
     function transfer(address to, uint256 amount) public override returns (bool) {
         _rebase();
-        return TToken.transfer(to, amount);
+        return TgToken.transfer(to, amount);
     }
 
-    // @inheritdoc TToken
+    // @inheritdoc TgToken
     function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
         _rebase();
-        return TToken.transferFrom(from, to, amount);
+        return TgToken.transferFrom(from, to, amount);
     }
 
     /**
-     * @notice Deposit assets to mint tTokens
-     * @param receiver address to mint tTokens to
+     * @notice Deposit assets to mint tgTokens
+     * @param receiver address to mint tgTokens to
      * @param assets amount of assets to deposit
      */
     function deposit(address receiver, uint256 assets) external returns (uint256) {
@@ -76,21 +76,21 @@ contract Tenderizer is TenderizerImmutableArgs, TenderizerEvents, TToken, Multic
         uint256 shares;
         if ((shares = _mint(receiver, staked)) == 0) revert InsufficientAssets();
 
-        uint256 tTokenOut = convertToAssets(shares);
-        emit Deposit(msg.sender, receiver, assets, tTokenOut);
+        uint256 tgTokenOut = convertToAssets(shares);
+        emit Deposit(msg.sender, receiver, assets, tgTokenOut);
 
-        return tTokenOut;
+        return tgTokenOut;
     }
 
     /**
-     * @notice Unlock tTokens to withdraw assets at maturity
+     * @notice Unlock tgTokens to withdraw assets at maturity
      * @param assets amount of assets to unlock
      * @return unlockID of the unlock
      */
     function unlock(uint256 assets) external returns (uint256 unlockID) {
         _rebase();
 
-        // burn tTokens before creating an `unlock`
+        // burn tgTokens before creating an `unlock`
         _burn(msg.sender, assets);
 
         // unlock assets and get unlockID
@@ -124,7 +124,7 @@ contract Tenderizer is TenderizerImmutableArgs, TenderizerEvents, TToken, Multic
     }
 
     /**
-     * @notice Rebase tToken supply
+     * @notice Rebase tgToken supply
      * @dev Rebase can be called by anyone, is also forced to be called before any action or transfer
      */
     function rebase() external {

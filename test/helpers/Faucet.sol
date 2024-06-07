@@ -23,7 +23,7 @@ contract TokenFaucet is Owned {
     /**
      * @dev Function for users to request tokens from the faucet.
      */
-    function requestTokens() external {
+    function requestgTokens() external {
         require(lastAccessTime[msg.sender] + cooldownTime < block.timestamp, "Cooldown not over yet");
 
         require(token.balanceOf(address(this)) >= amount, "Not enough tokens in the faucet");

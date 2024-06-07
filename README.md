@@ -143,7 +143,7 @@ delegatecall to the proxy. The implementation can then read and deserialize thes
 
 #### TenderToken
 
-`Tenderizer` inherits the `TToken` contract, which is a rebasing ERC20 token. Its supply always equals the amount staked
+`Tenderizer` inherits the `TGToken` contract, which is a rebasing ERC20 token. Its supply always equals the amount staked
 in the underlying protocol for a validator and its delegators. Rebasing changes the total supply depending on whether
 the validator earned rewards or got slashed.
 

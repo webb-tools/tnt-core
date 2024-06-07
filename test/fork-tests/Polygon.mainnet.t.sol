@@ -132,8 +132,8 @@ contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
         POL.approve(address(tenderizer), amount);
         vm.expectEmit({ checkTopic1: true, checkTopic2: true, checkTopic3: false, checkData: true });
         emit Deposit(address(this), address(this), amount, expectedOut);
-        uint256 tTokenOut = tenderizer.deposit(address(this), amount);
-        assertEq(preview, tTokenOut, "previewDeposit incorrect");
+        uint256 tgTokenOut = tenderizer.deposit(address(this), amount);
+        assertEq(preview, tgTokenOut, "previewDeposit incorrect");
         uint256 fxRateAfter = (delegatedAmount + amountToTransfer) * EXCHANGE_RATE_PRECISION_HIGH / (totalShares + mintedPolShares);
         assertEq(fxRateAfter, valShares.exchangeRate());
 
@@ -201,12 +201,12 @@ contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
         Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(POL), VALIDATOR_1)));
         vm.startPrank(HOLDER_1);
         POL.approve(address(tenderizer), HOLDER_1_DEPOSIT);
-        uint256 tTokenOut_1 = tenderizer.deposit(HOLDER_1, HOLDER_1_DEPOSIT);
+        uint256 tgTokenOut_1 = tenderizer.deposit(HOLDER_1, HOLDER_1_DEPOSIT);
         vm.stopPrank();
 
         vm.startPrank(HOLDER_2);
         POL.approve(address(tenderizer), HOLDER_2_DEPOSIT);
-        uint256 tTokenOut_2 = tenderizer.deposit(HOLDER_2, HOLDER_2_DEPOSIT);
+        uint256 tgTokenOut_2 = tenderizer.deposit(HOLDER_2, HOLDER_2_DEPOSIT);
         vm.stopPrank();
         IPolygonValidatorShares valShares = _getValidatorSharesContract(adapter.getValidatorId(VALIDATOR_1));
 
@@ -217,7 +217,7 @@ contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
         // uint256 tenderizerRewardAfterFee = rewardsForTenderizer - rewardsForTenderizer * 5e3 / 1e6;
         uint256 tenderizerRewards = tenderizerValShares * (rewardPerShare - initialRewardPerShare) / REWARD_PRECISION;
         vm.expectEmit();
-        emit Rebase(tTokenOut_1 + tTokenOut_2, tTokenOut_1 + tTokenOut_2 + tenderizerRewards);
+        emit Rebase(tgTokenOut_1 + tgTokenOut_2, tgTokenOut_1 + tgTokenOut_2 + tenderizerRewards);
         tenderizer.rebase();
 
         assertEq(
@@ -225,15 +225,15 @@ contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
             valShares.balanceOf(address(tenderizer)) * valShares.exchangeRate() / EXCHANGE_RATE_PRECISION_HIGH,
             "total supply incorrect vs total staked incorrect"
         );
-        assertEq(tenderizer.totalSupply(), tTokenOut_1 + tTokenOut_2 + tenderizerRewards, "total supply incorrect");
+        assertEq(tenderizer.totalSupply(), tgTokenOut_1 + tgTokenOut_2 + tenderizerRewards, "total supply incorrect");
         assertEq(
             tenderizer.balanceOf(HOLDER_1),
-            tTokenOut_1 + tenderizerRewards * tTokenOut_1 / (tTokenOut_1 + tTokenOut_2),
+            tgTokenOut_1 + tenderizerRewards * tgTokenOut_1 / (tgTokenOut_1 + tgTokenOut_2),
             "balance 1 incorrect"
         );
         assertEq(
             tenderizer.balanceOf(HOLDER_2),
-            tTokenOut_2 + tenderizerRewards * tTokenOut_2 / (tTokenOut_1 + tTokenOut_2),
+            tgTokenOut_2 + tenderizerRewards * tgTokenOut_2 / (tgTokenOut_1 + tgTokenOut_2),
             "balance 2 incorrect"
         );
     }

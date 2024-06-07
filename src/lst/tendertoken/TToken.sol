@@ -5,7 +5,7 @@ pragma solidity >=0.8.19;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 import { IERC20 } from "core/lst/interfaces/IERC20.sol";
-import { TTokenStorage } from "core/lst/tendertoken/TTokenStorage.sol";
+import { TgTokenStorage } from "core/lst/tendertoken/TgTokenStorage.sol";
 
 /// @notice Non-standard ERC20 + EIP-2612 implementation.
 /// @author Tenderize
@@ -13,7 +13,7 @@ import { TTokenStorage } from "core/lst/tendertoken/TTokenStorage.sol";
 /// @dev Do not mint shares without updating the total supply without being unaware of the consequences (see
 /// `_mintShares` and `_burnShares`).
 
-abstract contract TToken is TTokenStorage, IERC20 {
+abstract contract TgToken is TgTokenStorage, IERC20 {
     using FixedPointMathLib for uint256;
 
     error ZeroAmount();
@@ -34,14 +34,14 @@ abstract contract TToken is TTokenStorage, IERC20 {
     }
 
     /**
-     * @notice Returns the name of the tToken
-     * @return Name of the tToken
+     * @notice Returns the name of the tgToken
+     * @return Name of the tgToken
      */
     function name() external view virtual returns (string memory);
 
     /**
-     * @notice Returns the symbol of the tToken
-     * @return Symbol of the tToken
+     * @notice Returns the symbol of the tgToken
+     * @return Symbol of the tgToken
      */
     function symbol() external view virtual returns (string memory);
 
@@ -70,7 +70,7 @@ abstract contract TToken is TTokenStorage, IERC20 {
     }
 
     /**
-     * @notice Returns the tToken balance of an account
+     * @notice Returns the tgToken balance of an account
      * @param account address to get balance of
      * @return Balance of account
      */
@@ -79,8 +79,8 @@ abstract contract TToken is TTokenStorage, IERC20 {
     }
 
     /**
-     * @notice Returns the total supply of the tToken
-     * @return Total supply of the tToken
+     * @notice Returns the total supply of the tgToken
+     * @return Total supply of the tgToken
      */
     function totalSupply() public view virtual returns (uint256) {
         Storage storage $ = _loadStorage();
@@ -222,7 +222,7 @@ abstract contract TToken is TTokenStorage, IERC20 {
         return keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(bytes(TToken(address(this)).name())),
+                keccak256(bytes(TgToken(address(this)).name())),
                 keccak256("1"),
                 block.chainid,
                 address(this)
