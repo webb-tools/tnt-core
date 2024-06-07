@@ -1,7 +1,7 @@
 [submodule "lib/prb-test"]
   	branch = "0.3.1"
-  	path = "lib/prb-test"
-  	url = "https://github.com/paulrberg/prb-test"
+	path = lib/prb-test
+	url = https://github.com/paulrberg/prb-test
 [submodule "lib/prb-math"]
 	branch = v3
 	path = lib/prb-math
