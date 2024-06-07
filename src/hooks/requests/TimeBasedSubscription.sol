@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "../RequestHook.sol";
+import "core/hooks/RequestHook.sol";
 
 contract TimeBasedSubscriptionRequestHook is RequestHookBase {
     uint256 public price;
@@ -22,19 +22,19 @@ contract TimeBasedSubscriptionRequestHook is RequestHookBase {
     }
 
     /// We want to charge `price` for `duration` blocks.
-    function extendService(uint256 serviceId, uint256 duration) public payable {
+    function extendService(uint256 serviceId, uint256 _duration) public payable {
         // Check if the payment is sufficient.
         if (msg.value != price) {
             revert InsufficientPayment(price, msg.value);
         } else {
             paidAmountForSubscription[serviceId] += msg.value;
         }
-        
+
         // Extend the service subscription.
         if (expirationOfSubscription[serviceId] < block.number) {
-            expirationOfSubscription[serviceId] = block.number + duration;
+            expirationOfSubscription[serviceId] = block.number + _duration;
         } else {
-            expirationOfSubscription[serviceId] += duration;
+            expirationOfSubscription[serviceId] += _duration;
         }
     }
 

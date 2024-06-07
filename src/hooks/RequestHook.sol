@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "../Permissions.sol";
+import "core/Permissions.sol";
 
 /// @dev Created by the service blueprint designer (gadget developer)
 ///
@@ -11,7 +11,7 @@ import "../Permissions.sol";
 /// when a customer requests a new service. This hook must return
 /// true.
 contract RequestHookBase {
-    function requestService(uint256 serviceId) public virtual payable returns (bool) {
+    function requestService(uint256 serviceId) public payable virtual returns (bool) {
         return true;
     }
 

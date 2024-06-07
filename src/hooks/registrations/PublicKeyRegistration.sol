@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "../RegistrationHook.sol";
+import "core/hooks/RegistrationHook.sol";
 
 struct PublicKey {
     bytes publicKey;
@@ -22,7 +22,7 @@ contract Bls381PublicKeyRegistration is RegistrationHook {
     error InvalidPoK();
 
     constructor() {
-        publicKeys.push(PublicKey({publicKey: "", PoK: ""}));
+        publicKeys.push(PublicKey({ publicKey: "", PoK: "" }));
     }
 
     function getPublicKey(uint256 index) public view returns (bytes memory) {
@@ -56,7 +56,7 @@ contract Bls381PublicKeyRegistration is RegistrationHook {
         }
 
         accountToPublicKey[msg.sender] = publicKeys.length;
-        publicKeys.push(PublicKey({publicKey: publicKey, PoK: proof}));
+        publicKeys.push(PublicKey({ publicKey: publicKey, PoK: proof }));
 
         return true;
     }
