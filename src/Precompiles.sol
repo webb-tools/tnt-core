@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "./Permissions.sol";
+import "core/Permissions.sol";
 
 contract ServiceQuerier {
     address SERVICE_PRECOMPILE = address(0x02);

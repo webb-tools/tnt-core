@@ -1,0 +1,16 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "code-complexity": "off",
+    "compiler-version": ["error", ">=0.8.13"],
+    "func-visibility": [
+      "error",
+      {
+        "ignoreConstructors": true
+      }
+    ],
+    "no-inline-assembly": "off",
+    "not-rely-on-time": "off",
+    "var-name-mixedcase": "off"
+  }
+}

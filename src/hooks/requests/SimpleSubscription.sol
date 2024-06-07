@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "../RequestHook.sol";
+import "core/hooks/RequestHook.sol";
 
 contract SimpleSubscriptionRequestHook is RequestHookBase {
     uint256 public price;

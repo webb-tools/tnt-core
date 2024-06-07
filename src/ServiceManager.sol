@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "./Permissions.sol";
-import "./Precompiles.sol";
+import "core/Permissions.sol";
+import "core/Precompiles.sol";
 
 /// @dev Created by the service blueprint designer (gadget developer)
 /// @dev Deployed by the service requester (service instance creator)
