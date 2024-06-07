@@ -30,7 +30,6 @@ import { addressToString } from "core/lst/utils/Utils.sol";
  * @notice Liquid staking vault for native liquid staking
  * @dev Uses full type safety and unstructured storage
  */
-
 contract Tenderizer is TenderizerImmutableArgs, TenderizerEvents, TToken, Multicall, SelfPermit {
     error InsufficientAssets();
 

@@ -44,7 +44,7 @@ contract XYZ_Faucet is Script {
         cooldown = cooldown != 0 ? cooldown : 1 days;
         requestAmount = requestAmount != 0 ? requestAmount : 1000 ether;
 
-        address faucet = address(new TokenFaucet{salt: salt}(token, requestAmount, cooldown));
+        address faucet = address(new TokenFaucet{ salt: salt }(token, requestAmount, cooldown));
         token.transfer(faucet, seedAmount);
 
         console2.log("Faucet: ", faucet);

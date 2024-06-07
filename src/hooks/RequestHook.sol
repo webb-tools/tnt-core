@@ -11,7 +11,7 @@ import "core/Permissions.sol";
 /// when a customer requests a new service. This hook must return
 /// true.
 contract RequestHookBase {
-    function requestService(uint256 serviceId) public virtual payable returns (bool) {
+    function requestService(uint256 serviceId) public payable virtual returns (bool) {
         return true;
     }
 

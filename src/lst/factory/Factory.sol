@@ -22,7 +22,6 @@ import { Tenderizer } from "core/lst/tenderizer/Tenderizer.sol";
  * @author Tenderize Labs Ltd
  * @notice Factory for Tenderizer contracts
  */
-
 contract Factory {
     using ClonesWithImmutableArgs for address;
 

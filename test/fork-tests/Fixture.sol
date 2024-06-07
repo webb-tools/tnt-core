@@ -35,18 +35,18 @@ struct TenderizerFixture {
 function tenderizerFixture() returns (TenderizerFixture memory) {
     bytes32 salt = bytes32(uint256(1));
 
-    Registry registry = new Registry{salt: salt}();
-    address registryProxy = address(new ERC1967Proxy{salt: salt}(address(registry), ""));
+    Registry registry = new Registry{ salt: salt }();
+    address registryProxy = address(new ERC1967Proxy{ salt: salt }(address(registry), ""));
 
-    Renderer renderer = new Renderer{salt: salt}();
-    ERC1967Proxy rendererProxy = new ERC1967Proxy{salt: salt}(address(renderer), abi.encodeCall(renderer.initialize, ()));
-    Unlocks unlocks = new Unlocks{salt: salt}(address(registryProxy), address(rendererProxy));
+    Renderer renderer = new Renderer{ salt: salt }();
+    ERC1967Proxy rendererProxy = new ERC1967Proxy{ salt: salt }(address(renderer), abi.encodeCall(renderer.initialize, ()));
+    Unlocks unlocks = new Unlocks{ salt: salt }(address(registryProxy), address(rendererProxy));
 
-    Tenderizer tenderizer = new Tenderizer{salt: salt}(registryProxy, address(unlocks));
+    Tenderizer tenderizer = new Tenderizer{ salt: salt }(registryProxy, address(unlocks));
 
     Registry(registryProxy).initialize(address(tenderizer), address(unlocks));
 
-    Factory factory = new Factory{salt: salt}(address(registryProxy));
+    Factory factory = new Factory{ salt: salt }(address(registryProxy));
 
     Registry(registryProxy).grantRole(FACTORY_ROLE, address(factory));
 

@@ -39,6 +39,8 @@ contract Adapter_Deploy is Script {
 
         address adapter;
 
+        // On local testing node, the token addresses will be different than mainnet
+        // So do not compare token addresses
         // check which adapter to deploy
         // if (asset == address(LPT)) {
         //     adapter = address(new LivepeerAdapter{ salt: bytes32(LPT_VERSION) }());

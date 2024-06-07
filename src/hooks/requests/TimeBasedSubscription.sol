@@ -29,7 +29,7 @@ contract TimeBasedSubscriptionRequestHook is RequestHookBase {
         } else {
             paidAmountForSubscription[serviceId] += msg.value;
         }
-        
+
         // Extend the service subscription.
         if (expirationOfSubscription[serviceId] < block.number) {
             expirationOfSubscription[serviceId] = block.number + _duration;
