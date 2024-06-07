@@ -7,7 +7,7 @@ pragma solidity >=0.8.19;
 
 import { Test, stdError } from "forge-std/Test.sol";
 import { PolygonAdapter, EXCHANGE_RATE_PRECISION_HIGH, WITHDRAW_DELAY } from "core/lst/adapters/PolygonAdapter.sol";
-import { ITenderizer } from "core/lst/tenderizer/ITenderizer.sol";
+import { ILiquifier } from "core/lst/liquifier/ILiquifier.sol";
 import { IPolygonStakeManager, IPolygonValidatorShares, DelegatorUnbond } from "core/lst/adapters/interfaces/IPolygon.sol";
 import { AdapterDelegateCall } from "core/lst/adapters/Adapter.sol";
 
@@ -27,7 +27,7 @@ contract PolygonAdapterTest is Test {
 
         // Set default mock calls
         // set validator to `address(this)`
-        vm.mockCall(address(this), abi.encodeCall(ITenderizer.validator, ()), abi.encode(address(this)));
+        vm.mockCall(address(this), abi.encodeCall(ILiquifier.validator, ()), abi.encode(address(this)));
         // set validator id for `address(this)` to 8 (not a foundation validator)
         vm.mockCall(
             MATIC_STAKE_MANAGER, abi.encodeCall(IPolygonStakeManager.getValidatorId, (address(this))), abi.encode(validatorId)

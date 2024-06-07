@@ -3,15 +3,15 @@
 pragma solidity >=0.8.19;
 
 import { IERC20 } from "core/lst/interfaces/IERC20.sol";
-import { Tenderizer } from "core/lst/tenderizer/Tenderizer.sol";
+import { Liquifier } from "core/lst/liquifier/Liquifier.sol";
 
 /**
- * @title ITenderizer
- * @author Tenderize Labs Ltd
- * @notice This interface can be used by external sources to interfact with a Tenderizer.
+ * @title ILiquifier
+ * @author Liquifie Labs Ltd
+ * @notice This interface can be used by external sources to interfact with a Liquifier.
  * @dev Contains only the necessary API
  */
-interface ITenderizer is IERC20 {
+interface ILiquifier is IERC20 {
     function asset() external view returns (IERC20);
     function validator() external view returns (address);
     function deposit(address receiver, uint256 assets) external returns (uint256);

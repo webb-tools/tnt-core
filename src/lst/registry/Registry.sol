@@ -11,17 +11,17 @@ import { IERC165 } from "core/lst/interfaces/IERC165.sol";
 import { Adapter } from "core/lst/adapters/Adapter.sol";
 /**
  * @title Registry
- * @author Tenderize Labs Ltd
- * @notice Registry for Tenderizer ecosystem. Role-based access, fee management and adapter updates.
+ * @author Liquifie Labs Ltd
+ * @notice Registry for Liquifier ecosystem. Role-based access, fee management and adapter updates.
  */
 
 contract Registry is Initializable, UUPSUpgradeable, AccessControlUpgradeable, RegistryStorage {
     error InvalidAdapter(address adapter);
     error InvalidTreasury(address treasury);
-    error TenderizerAlreadyExists(address asset, address validator, address tenderizer);
+    error LiquifierAlreadyExists(address asset, address validator, address liquifier);
 
     event AdapterRegistered(address indexed asset, address indexed adapter);
-    event NewTenderizer(address indexed asset, address indexed validator, address tenderizer);
+    event NewLiquifier(address indexed asset, address indexed validator, address liquifier);
     event FeeAdjusted(address indexed asset, uint256 newFee, uint256 oldFee);
     event TreasurySet(address indexed treasury);
 
@@ -30,7 +30,7 @@ contract Registry is Initializable, UUPSUpgradeable, AccessControlUpgradeable, R
         _disableInitializers();
     }
 
-    function initialize(address _tenderizer, address _unlocks) public initializer {
+    function initialize(address _liquifier, address _unlocks) public initializer {
         __AccessControl_init();
         _grantRole(UPGRADE_ROLE, msg.sender);
         _grantRole(GOVERNANCE_ROLE, msg.sender);
@@ -43,7 +43,7 @@ contract Registry is Initializable, UUPSUpgradeable, AccessControlUpgradeable, R
         // If all members of UPGRADE_ROLE are revoked, contract upgradability is revoked
         _setRoleAdmin(UPGRADE_ROLE, UPGRADE_ROLE);
         Storage storage $ = _loadStorage();
-        $.tenderizer = _tenderizer;
+        $.liquifier = _liquifier;
         $.unlocks = _unlocks;
     }
 
@@ -58,11 +58,11 @@ contract Registry is Initializable, UUPSUpgradeable, AccessControlUpgradeable, R
     }
 
     /**
-     * @notice Returns the address of the tenderizer implementation
+     * @notice Returns the address of the liquifier implementation
      */
-    function tenderizer() external view returns (address) {
+    function liquifier() external view returns (address) {
         Storage storage $ = _loadStorage();
-        return $.tenderizer;
+        return $.liquifier;
     }
 
     /**
@@ -90,22 +90,22 @@ contract Registry is Initializable, UUPSUpgradeable, AccessControlUpgradeable, R
     }
 
     /**
-     * @notice Returns whether a given address is a valid tenderizer
-     * @param tenderizer Address of the tenderizer
-     * @return Whether the address is a valid tenderizer
+     * @notice Returns whether a given address is a valid liquifier
+     * @param liquifier Address of the liquifier
+     * @return Whether the address is a valid liquifier
      */
-    function isTenderizer(address tenderizer) external view returns (bool) {
-        return hasRole(TENDERIZER_ROLE, tenderizer);
+    function isLiquifier(address liquifier) external view returns (bool) {
+        return hasRole(TENDERIZER_ROLE, liquifier);
     }
 
     /**
-     * @notice Returns the address of the tenderizer for a given asset and validator
+     * @notice Returns the address of the liquifier for a given asset and validator
      * @param asset Address of the underlying asset
      * @param validator Address of the validator
-     * @return Address of the tenderizer
+     * @return Address of the liquifier
      */
-    function getTenderizer(address asset, address validator) external view returns (address) {
-        return _loadStorage().tenderizers[asset][validator];
+    function getLiquifier(address asset, address validator) external view returns (address) {
+        return _loadStorage().liquifiers[asset][validator];
     }
 
     // Setters
@@ -124,20 +124,20 @@ contract Registry is Initializable, UUPSUpgradeable, AccessControlUpgradeable, R
     }
 
     /**
-     * @notice Registers a new tenderizer for a given asset
+     * @notice Registers a new liquifier for a given asset
      * @dev Can only be called by a member of the Roles.FACTORY
      * @param asset Address of the underlying asset
      * @param validator Address of the validator
-     * @param tenderizer Address of the tenderizer
+     * @param liquifier Address of the liquifier
      */
-    function registerTenderizer(address asset, address validator, address tenderizer) external onlyRole(FACTORY_ROLE) {
+    function registerLiquifier(address asset, address validator, address liquifier) external onlyRole(FACTORY_ROLE) {
         Storage storage $ = _loadStorage();
-        if ($.tenderizers[asset][validator] != address(0)) {
-            revert TenderizerAlreadyExists(asset, validator, $.tenderizers[asset][validator]);
+        if ($.liquifiers[asset][validator] != address(0)) {
+            revert LiquifierAlreadyExists(asset, validator, $.liquifiers[asset][validator]);
         }
-        $.tenderizers[asset][validator] = tenderizer;
-        _grantRole(TENDERIZER_ROLE, tenderizer);
-        emit NewTenderizer(asset, validator, tenderizer);
+        $.liquifiers[asset][validator] = liquifier;
+        _grantRole(TENDERIZER_ROLE, liquifier);
+        emit NewLiquifier(asset, validator, liquifier);
     }
 
     /**

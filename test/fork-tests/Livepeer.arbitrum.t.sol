@@ -15,13 +15,13 @@ import {
     TWAP_INTERVAL,
     WETH
 } from "core/lst/adapters/LivepeerAdapter.sol";
-import { Tenderizer, TenderizerEvents } from "core/lst/tenderizer/Tenderizer.sol";
+import { Liquifier, LiquifierEvents } from "core/lst/liquifier/Liquifier.sol";
 import { Unlocks, Metadata } from "core/lst/unlocks/Unlocks.sol";
 import { TWAP } from "core/lst/utils/TWAP.sol";
 import { ILivepeerBondingManager, ILivepeerRoundsManager } from "core/lst/adapters/interfaces/ILivepeer.sol";
 import { ERC721Receiver } from "core/lst/utils/ERC721Receiver.sol";
 import { IQuoter } from "core/lst/adapters/interfaces/IUniswap_Quoter.sol";
-import { TenderizerFixture, tenderizerFixture } from "./Fixture.sol";
+import { LiquifierFixture, liquifierFixture } from "./Fixture.sol";
 
 ILivepeerBonding constant BONDING = ILivepeerBonding(address(LIVEPEER_BONDING));
 ILivepeerRounds constant ROUNDS = ILivepeerRounds(address(LIVEPEER_ROUNDS));
@@ -78,11 +78,11 @@ interface ILivepeerRounds is ILivepeerRoundsManager {
     function initializeRound() external;
 }
 
-contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
-    TenderizerFixture fixture;
+contract LivepeerForkTest is Test, LiquifierEvents, ERC721Receiver {
+    LiquifierFixture fixture;
     LivepeerAdapter adapter;
 
-    event NewTenderizer(address indexed asset, address indexed validator, address tenderizer);
+    event NewLiquifier(address indexed asset, address indexed validator, address liquifier);
 
     function mintLPT(address account, uint256 amount) public {
         vm.prank(MINTER);
@@ -92,7 +92,7 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
     function setUp() public {
         bytes32 salt = bytes32(uint256(1));
         vm.createSelectFork(vm.envString("ARBITRUM_RPC"));
-        fixture = tenderizerFixture();
+        fixture = liquifierFixture();
         adapter = new LivepeerAdapter{ salt: salt }();
         fixture.registry.registerAdapter(address(LPT), address(adapter));
     }
@@ -118,49 +118,49 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
         assertEq(adapter.previewDeposit(ORCHESTRATOR_1, 10 ether), 10 ether, "previewDeposit incorrect");
     }
 
-    function test_factory_newTenderizer() public {
+    function test_factory_newLiquifier() public {
         // Revert with inactive orchestrator
         address inactiveOrchestrator = makeAddr("INACTIVE_ORCHESTRATOR");
         vm.expectRevert(abi.encodeWithSelector(Factory.NotValidator.selector, (inactiveOrchestrator)));
-        fixture.factory.newTenderizer(address(LPT), inactiveOrchestrator);
+        fixture.factory.newLiquifier(address(LPT), inactiveOrchestrator);
 
-        // Deploy tenderizer
+        // Deploy liquifier
         vm.expectEmit({ checkTopic1: true, checkTopic2: true, checkTopic3: false, checkData: false });
-        emit NewTenderizer(address(LPT), ORCHESTRATOR_1, address(0x0));
-        fixture.factory.newTenderizer(address(LPT), ORCHESTRATOR_1);
+        emit NewLiquifier(address(LPT), ORCHESTRATOR_1, address(0x0));
+        fixture.factory.newLiquifier(address(LPT), ORCHESTRATOR_1);
     }
 
     function test_deposit() public {
         uint256 depositAmount = 10 ether;
 
-        // Deploy tenderizer
-        Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(LPT), ORCHESTRATOR_1)));
+        // Deploy liquifier
+        Liquifier liquifier = Liquifier(payable(fixture.factory.newLiquifier(address(LPT), ORCHESTRATOR_1)));
 
         uint256 currentStake = BONDING.pendingStake(address(this), type(uint256).max);
 
         // Deposit
         mintLPT(address(this), depositAmount);
-        LPT.approve(address(tenderizer), depositAmount);
+        LPT.approve(address(liquifier), depositAmount);
 
         vm.expectEmit({ checkTopic1: true, checkTopic2: true, checkTopic3: false, checkData: true });
         emit Deposit(address(this), address(this), depositAmount, depositAmount);
-        tenderizer.deposit(address(this), depositAmount);
+        liquifier.deposit(address(this), depositAmount);
 
-        (uint256 bondedAmount,,,,,,) = BONDING.getDelegator(address(tenderizer));
+        (uint256 bondedAmount,,,,,,) = BONDING.getDelegator(address(liquifier));
 
-        assertEq(tenderizer.totalSupply(), depositAmount, "total supply");
-        assertEq(tenderizer.balanceOf(address(this)), depositAmount, "balance of");
+        assertEq(liquifier.totalSupply(), depositAmount, "total supply");
+        assertEq(liquifier.balanceOf(address(this)), depositAmount, "balance of");
         assertEq(bondedAmount, currentStake + depositAmount, "Bonded amount");
-        assertEq(BONDING.pendingStake(address(tenderizer), type(uint256).max), currentStake + depositAmount, "pending stake");
+        assertEq(BONDING.pendingStake(address(liquifier), type(uint256).max), currentStake + depositAmount, "pending stake");
     }
 
     function test_unstake_withdraw() public {
         uint256 depositAmount = 10 ether;
         uint256 unstakeAmount = 5 ether;
-        Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(LPT), ORCHESTRATOR_1)));
+        Liquifier liquifier = Liquifier(payable(fixture.factory.newLiquifier(address(LPT), ORCHESTRATOR_1)));
         mintLPT(address(this), depositAmount);
-        LPT.approve(address(tenderizer), depositAmount);
-        tenderizer.deposit(address(this), depositAmount);
+        LPT.approve(address(liquifier), depositAmount);
+        liquifier.deposit(address(this), depositAmount);
 
         // Livepeer only allows unbonding from when the next round starts
         // That's when added stake becomes active
@@ -172,13 +172,13 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
 
         vm.expectEmit();
         emit Unlock(address(this), unstakeAmount, 0);
-        uint256 unlockID = tenderizer.unlock(unstakeAmount);
-        (uint256 bondedAmount,,,,,,) = BONDING.getDelegator(address(tenderizer));
+        uint256 unlockID = liquifier.unlock(unstakeAmount);
+        (uint256 bondedAmount,,,,,,) = BONDING.getDelegator(address(liquifier));
         assertEq(bondedAmount, depositAmount - unstakeAmount, "Bonded amount");
-        assertEq(BONDING.pendingStake(address(tenderizer), type(uint256).max), depositAmount - unstakeAmount, "pending stake");
+        assertEq(BONDING.pendingStake(address(liquifier), type(uint256).max), depositAmount - unstakeAmount, "pending stake");
 
         {
-            (uint256 amount,) = BONDING.getDelegatorUnbondingLock(address(tenderizer), unlockID);
+            (uint256 amount,) = BONDING.getDelegatorUnbondingLock(address(liquifier), unlockID);
             assertEq(amount, unstakeAmount, "unstake amount");
         }
 
@@ -187,12 +187,12 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
         uint256 blocksRemainingInCurrentRound = roundLength - (block.number - currentRoundStartBlock);
 
         assertEq(
-            tenderizer.unlockMaturity(unlockID),
+            liquifier.unlockMaturity(unlockID),
             block.number + roundLength * (unlockRounds - 1) + blocksRemainingInCurrentRound,
             "unlock maturity"
         );
 
-        uint256 tokenId = uint256(bytes32(abi.encodePacked(address(tenderizer), unlockID)));
+        uint256 tokenId = uint256(bytes32(abi.encodePacked(address(liquifier), unlockID)));
         Metadata memory metadata = fixture.unlocks.getMetadata(tokenId);
 
         assertEq(metadata.amount, unstakeAmount, "metadata amount");
@@ -217,16 +217,16 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
 
         vm.expectEmit();
         emit Withdraw(address(this), unstakeAmount, unlockID);
-        uint256 withdrawn = tenderizer.withdraw(address(this), unlockID);
+        uint256 withdrawn = liquifier.withdraw(address(this), unlockID);
 
         assertEq(withdrawn, unstakeAmount);
         // Check Livepeer's unbonding lock is deleted
         {
-            (uint256 amount, uint256 withdrawRound) = BONDING.getDelegatorUnbondingLock(address(tenderizer), unlockID);
+            (uint256 amount, uint256 withdrawRound) = BONDING.getDelegatorUnbondingLock(address(liquifier), unlockID);
             assertEq(amount, 0, "unstake amount zero");
             assertEq(withdrawRound, 0, "withdraw round zero");
         }
-        // Check Tenderize Unlock is deleted
+        // Check Liquifie Unlock is deleted
         vm.expectRevert("NOT_MINTED");
         fixture.unlocks.ownerOf(tokenId);
         // Check LPT balance
@@ -235,10 +235,10 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
 
     function test_rebase() public {
         uint256 depositAmount = 100_000 ether;
-        Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(LPT), ORCHESTRATOR_1)));
+        Liquifier liquifier = Liquifier(payable(fixture.factory.newLiquifier(address(LPT), ORCHESTRATOR_1)));
         mintLPT(address(this), depositAmount);
-        LPT.approve(address(tenderizer), depositAmount);
-        tenderizer.deposit(address(this), depositAmount);
+        LPT.approve(address(liquifier), depositAmount);
+        liquifier.deposit(address(this), depositAmount);
 
         // Initialize next round to make stake active
         uint256 currentRoundStartBlock = ROUNDS.currentRoundStartBlock();
@@ -247,9 +247,9 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
 
         // Add fees - check eth fees only rebase
         uint256 fees = 0.1 ether + 1;
-        updateTenderizerFees(address(tenderizer), fees);
+        updateLiquifierFees(address(liquifier), fees);
         // account for rounding error of 1 wei
-        fees = BONDING.pendingFees(address(tenderizer), 0);
+        fees = BONDING.pendingFees(address(liquifier), 0);
         assertEq(fees, 0.1 ether, "pending fees");
         uint256 quotedOut = IQuoter(UNI_QUOTER).quoteExactInputSingle(address(WETH), address(LPT), 3000, fees, 0);
         // vm.expectEmit();
@@ -257,9 +257,9 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
         currentRoundStartBlock = ROUNDS.currentRoundStartBlock();
         vm.roll(currentRoundStartBlock + roundLength);
         ROUNDS.initializeRound();
-        Tenderizer(tenderizer).rebase();
-        assertEq(tenderizer.totalSupply(), depositAmount + quotedOut, "total supply fees only");
-        (uint256 bondedAmount,,,,,,) = BONDING.getDelegator(address(tenderizer));
+        Liquifier(liquifier).rebase();
+        assertEq(liquifier.totalSupply(), depositAmount + quotedOut, "total supply fees only");
+        (uint256 bondedAmount,,,,,,) = BONDING.getDelegator(address(liquifier));
         assertEq(bondedAmount, depositAmount + quotedOut, "Bonded amount fees only");
 
         // Initialize next round
@@ -274,11 +274,11 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
         // call reward
         vm.prank(ORCHESTRATOR_1);
         BONDING.reward();
-        Tenderizer(tenderizer).rebase();
+        Liquifier(liquifier).rebase();
         uint256 round = ROUNDS.currentRound();
         (,,, uint256 crfAfter,) = BONDING.getTranscoderEarningsPoolForRound(ORCHESTRATOR_1, round);
         uint256 expStake = bondedAmount * crfAfter / crfBefore;
-        assertEq(tenderizer.totalSupply(), expStake, "total supply rewards only");
+        assertEq(liquifier.totalSupply(), expStake, "total supply rewards only");
 
         // Initialize next round
         currentRoundStartBlock = ROUNDS.currentRoundStartBlock();
@@ -288,8 +288,8 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
 
         // Add Eth Fees
         fees = 0.1 ether + 1;
-        updateTenderizerFees(address(tenderizer), fees);
-        fees = BONDING.pendingFees(address(tenderizer), 0);
+        updateLiquifierFees(address(liquifier), fees);
+        fees = BONDING.pendingFees(address(liquifier), 0);
         quotedOut = IQuoter(UNI_QUOTER).quoteExactInputSingle(address(WETH), address(LPT), 3000, fees, 0);
 
         // Call reward
@@ -298,24 +298,24 @@ contract LivepeerForkTest is Test, TenderizerEvents, ERC721Receiver {
         round = ROUNDS.currentRound();
         (,,, crfAfter,) = BONDING.getTranscoderEarningsPoolForRound(ORCHESTRATOR_1, round);
         expStake = expStake * (crfAfter * 1e27 / crfBefore) / 1e27 + quotedOut - 1;
-        Tenderizer(tenderizer).rebase();
+        Liquifier(liquifier).rebase();
         assertEq(
-            tenderizer.totalSupply(), BONDING.pendingStake(address(tenderizer), type(uint256).max), "total supply vs pending stake"
+            liquifier.totalSupply(), BONDING.pendingStake(address(liquifier), type(uint256).max), "total supply vs pending stake"
         );
-        assertEq(tenderizer.totalSupply(), expStake, "total supply rewards & fees");
+        assertEq(liquifier.totalSupply(), expStake, "total supply rewards & fees");
     }
 
-    function updateTenderizerFees(address tenderizer, uint256 amount) internal {
-        address orchestrator = Tenderizer(payable(tenderizer)).validator();
+    function updateLiquifierFees(address liquifier, uint256 amount) internal {
+        address orchestrator = Liquifier(payable(liquifier)).validator();
         uint256 round = ROUNDS.currentRound();
 
-        // get tenderizer stake share of delegation pool
+        // get liquifier stake share of delegation pool
         // and orchestrator's fee cut
         (,, uint256 feeShare,,,,,,,) = BONDING.getTranscoder(orchestrator);
         uint256 orchStake = BONDING.transcoderTotalStake(orchestrator);
-        uint256 tenderizerStake = BONDING.pendingStake(tenderizer, round);
+        uint256 liquifierStake = BONDING.pendingStake(liquifier, round);
 
-        uint256 fees = amount * (orchStake * 1e6 / feeShare) / tenderizerStake;
+        uint256 fees = amount * (orchStake * 1e6 / feeShare) / liquifierStake;
         vm.prank(TICKET_BROKER);
         BONDING.updateTranscoderWithFees(orchestrator, fees, round);
         vm.prank(MINTER);

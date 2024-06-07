@@ -1,8 +1,8 @@
-# Tenderize Deployments
+# Liquifie Deployments
 
 ## Deploying To Anvil
 
-Tenderizer uses `CREATE2` to deploy contracts. Forge expects this contract to be deterministically deployed at
+Liquifier uses `CREATE2` to deploy contracts. Forge expects this contract to be deterministically deployed at
 `0x4e59b44847b379578588920ca78fbf26c0b4956c`.
 
 Anvil by default doesn't have the `CREATE2` proxy deployed. Instead, `anvil_setCode` can be used as a workaround.
@@ -14,14 +14,14 @@ curl -H "Content-Type: application/json" -X POST --data '{"jsonrpc":"2.0","id":6
 As a sanity check you can run `cast code "0x4e59b44847b379578588920ca78fbf26c0b4956c" --rpc-url http://127.0.0.1:8545`
 to see if this was succesful.
 
-## Deploy Tenderizer
+## Deploy Liquifier
 
-The Tenderizer Factory and all associated components need to be deployed only once per network by setting the vars in
+The Liquifier Factory and all associated components need to be deployed only once per network by setting the vars in
 `.env` and running:
 
 ```sh
 source .env
-forge script script/Tenderize_Deploy.s.sol --broadcast --rpc-url $GOERLI_RPC_URL --verify
+forge script script/Liquifie_Deploy.s.sol --broadcast --rpc-url $GOERLI_RPC_URL --verify
 ```
 
 This script will execute following calls:
@@ -33,8 +33,8 @@ This script will execute following calls:
    - Deploy `Renderer` Implementation
    - Deploy `Renderer` `ERC1967` UUPS Proxy
    - Deploy `Unlocks` contract
-3. Deploy `Tenderizer` Implementation
-4. Initialize `Registry` with `Tenderizer` implementation address and `Unlocks` address as arguments
+3. Deploy `Liquifier` Implementation
+4. Initialize `Registry` with `Liquifier` implementation address and `Unlocks` address as arguments
 5. Deploy `Factory` with `Registry` address as argument
    - Set `FACTORY_ROLE` on `Registry` for `Factory`
 

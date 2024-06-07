@@ -1,5 +1,3 @@
-// SPDX-FileCopyrightText: 2021 Tenderize <info@tenderize.me>
-
 // SPDX-License-Identifier: MIT
 
 // solhint-disable func-name-mixedcase

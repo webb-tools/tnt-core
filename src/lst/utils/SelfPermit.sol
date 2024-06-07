@@ -1,5 +1,3 @@
-// SPDX-FileCopyrightText: 2021 Tenderize <info@tenderize.me>
-
 // SPDX-License-Identifier: MIT
 
 import { ERC20 } from "solmate/tokens/ERC20.sol";

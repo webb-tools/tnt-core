@@ -6,7 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { VmSafe } from "forge-std/Vm.sol";
 
 import { PolygonAdapter, POL } from "core/lst/adapters/PolygonAdapter.sol";
-import { Tenderizer } from "core/lst/tenderizer/ITenderizer.sol";
+import { Liquifier } from "core/lst/liquifier/ILiquifier.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 
 address constant VALIDATOR_OLD = 0x055BD801cA712b4ddf67db8BC23FB6C8510D52b9;
@@ -21,17 +21,17 @@ contract Polygon_Advisory_Fix_1 is Test {
     }
 
     function test_rebase_fails() public {
-        Tenderizer tenderizer = Tenderizer(TENDERIZER);
+        Liquifier liquifier = Liquifier(TENDERIZER);
         vm.expectRevert();
-        tenderizer.rebase();
+        liquifier.rebase();
     }
 
     function test_fixed_adapter() public {
         address adapter = address(new PolygonAdapter());
         Registry registry = Registry(REGISTRY);
-        Tenderizer tenderizer = Tenderizer(TENDERIZER);
+        Liquifier liquifier = Liquifier(TENDERIZER);
         vm.prank(GOVERNOR);
         registry.registerAdapter(address(POL), adapter);
-        tenderizer.rebase();
+        liquifier.rebase();
     }
 }

@@ -7,13 +7,13 @@ import { Unlocks } from "core/lst/unlocks/Unlocks.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 import { Adapter } from "core/lst/adapters/Adapter.sol";
 
-/// @title TenderizerImmutableArgs
-/// @notice Immutable arguments for Tenderizer
+/// @title LiquifierImmutableArgs
+/// @notice Immutable arguments for Liquifier
 /// @dev Immutable arguments are appended to the proxy bytecode at deployment of a clone.
 /// Arguments are appended to calldata when the proxy delegatecals to its implementation,
 /// where these arguments can be read given their memory offset and length.
 
-abstract contract TenderizerImmutableArgs is Clone {
+abstract contract LiquifierImmutableArgs is Clone {
     constructor(address _registry, address _unlocks) {
         registry = _registry;
         unlocks = _unlocks;
@@ -51,9 +51,9 @@ abstract contract TenderizerImmutableArgs is Clone {
     }
 }
 
-/// @title TenderizerEvents
-/// @notice Events for Tenderizer
-abstract contract TenderizerEvents {
+/// @title LiquifierEvents
+/// @notice Events for Liquifier
+abstract contract LiquifierEvents {
     event Deposit(address indexed sender, address indexed receiver, uint256 assetsIn, uint256 tgTokenOut);
 
     event Rebase(uint256 oldStake, uint256 newStake);

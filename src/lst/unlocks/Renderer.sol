@@ -43,7 +43,7 @@ contract Renderer is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                     abi.encodePacked(
                         '{"name": "TenderLock',
                         // solhint-disable-next-line max-line-length
-                        '", "description": "TenderLock from https://tenderize.me represents ERC20 tokens during the unbonding period, thus making them tradable. Owning a TenderLock token makes the owner eligible to claim the tokens at the end of the unbonding period.", "image": "data:image/svg+xml;base64,',
+                        '", "description": "TenderLock from https://liquifie.me represents ERC20 tokens during the unbonding period, thus making them tradable. Owning a TenderLock token makes the owner eligible to claim the tokens at the end of the unbonding period.", "image": "data:image/svg+xml;base64,',
                         svg(data),
                         '",',
                         '"attributes":[',

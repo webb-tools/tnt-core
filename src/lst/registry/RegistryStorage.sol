@@ -3,7 +3,7 @@
 pragma solidity >=0.8.19;
 
 contract RegistryStorage {
-    uint256 private constant STORAGE = uint256(keccak256("xyz.tenderize.registry.storage.location")) - 1;
+    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifie.registry.storage.location")) - 1;
 
     struct Protocol {
         address adapter;
@@ -11,11 +11,11 @@ contract RegistryStorage {
     }
 
     struct Storage {
-        address tenderizer;
+        address liquifier;
         address unlocks;
         address treasury;
         mapping(address => Protocol) protocols;
-        mapping(address asset => mapping(address validator => address tenderizer)) tenderizers;
+        mapping(address asset => mapping(address validator => address liquifier)) liquifiers;
     }
 
     function _loadStorage() internal pure returns (Storage storage $) {

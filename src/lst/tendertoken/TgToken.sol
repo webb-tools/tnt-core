@@ -8,7 +8,7 @@ import { IERC20 } from "core/lst/interfaces/IERC20.sol";
 import { TgTokenStorage } from "core/lst/tendertoken/TgTokenStorage.sol";
 
 /// @notice Non-standard ERC20 + EIP-2612 implementation.
-/// @author Tenderize
+/// @author Liquifie
 /// @author Modified from Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol)
 /// @dev Do not mint shares without updating the total supply without being unaware of the consequences (see
 /// `_mintShares` and `_burnShares`).

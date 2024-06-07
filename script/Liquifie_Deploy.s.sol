@@ -7,7 +7,7 @@ pragma solidity >=0.8.19;
 import { Script, console2 } from "forge-std/Script.sol";
 import { ERC1967Proxy } from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import { Tenderizer } from "core/lst/tenderizer/Tenderizer.sol";
+import { Liquifier } from "core/lst/liquifier/Liquifier.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 import { FACTORY_ROLE } from "core/lst/registry/Roles.sol";
 import { Renderer } from "core/lst/unlocks/Renderer.sol";
@@ -16,7 +16,7 @@ import { Factory } from "core/lst/factory/Factory.sol";
 
 uint256 constant VERSION = 1;
 
-contract Tenderize_Deploy is Script {
+contract Liquifie_Deploy is Script {
     // Contracts are deployed deterministically.
     // e.g. `foo = new Foo{salt: salt}(constructorArgs)`
     // The presence of the salt argument tells forge to use https://github.com/Arachnid/deterministic-deployment-proxy
@@ -53,13 +53,13 @@ contract Tenderize_Deploy is Script {
         console2.log("Renderer Proxy: ", address(rendererProxy));
         console2.log("Unlocks: ", address(unlocks));
 
-        // 3. Deploy Tenderizer Implementation
-        Tenderizer tenderizer = new Tenderizer{ salt: salt }(registryProxy, address(unlocks));
-        vm.serializeAddress(json_output, "tenderizer_implementation", address(tenderizer));
-        console2.log("Tenderizer Implementation: ", address(tenderizer));
+        // 3. Deploy Liquifier Implementation
+        Liquifier liquifier = new Liquifier{ salt: salt }(registryProxy, address(unlocks));
+        vm.serializeAddress(json_output, "liquifier_implementation", address(liquifier));
+        console2.log("Liquifier Implementation: ", address(liquifier));
 
         // 4. Initialize Registry
-        Registry(registryProxy).initialize(address(tenderizer), address(unlocks));
+        Registry(registryProxy).initialize(address(liquifier), address(unlocks));
 
         // 5. Deploy Factory
         Factory factory = new Factory{ salt: salt }(address(registryProxy));

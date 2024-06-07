@@ -31,10 +31,10 @@ contract RegistryV3 is Registry {
 
 contract RegistryUpgradeTest is UUPSTestHelper {
     address private gov = vm.addr(3);
-    address private tenderizer = vm.addr(4);
+    address private liquifier = vm.addr(4);
     address private unlocks = vm.addr(5);
 
-    constructor() UUPSTestHelper(address(new Registry()), abi.encodeCall(Registry.initialize, (tenderizer, unlocks))) { }
+    constructor() UUPSTestHelper(address(new Registry()), abi.encodeCall(Registry.initialize, (liquifier, unlocks))) { }
 
     function test_InitialRoles() public {
         assertEq(Registry(address(proxy)).hasRole(UPGRADE_ROLE, owner), true);
@@ -139,12 +139,12 @@ contract RegistryTest is Test {
     address private account = vm.addr(2);
     address private adapter;
     address private asset = vm.addr(4);
-    address private tenderizer = vm.addr(5);
+    address private liquifier = vm.addr(5);
     address private factory = vm.addr(5);
     address private feeGauge = vm.addr(6);
 
     event AdapterRegistered(address indexed asset, address indexed adapter);
-    event NewTenderizer(address indexed asset, address indexed validator, address tenderizer);
+    event NewLiquifier(address indexed asset, address indexed validator, address liquifier);
     event FeeAdjusted(address indexed asset, uint256 newFee, uint256 oldFee);
     event TreasurySet(address indexed treasury);
 
@@ -184,31 +184,31 @@ contract RegistryTest is Test {
         registry.registerAdapter(asset, _adapter);
     }
 
-    function test_RegisterTenderizer() public {
+    function test_RegisterLiquifier() public {
         vm.prank(owner);
         registry.grantRole(FACTORY_ROLE, factory);
 
         vm.prank(factory);
         vm.expectEmit(true, true, true, true);
-        emit NewTenderizer(asset, account, tenderizer);
-        registry.registerTenderizer(asset, account, tenderizer);
-        assertEq(registry.hasRole(TENDERIZER_ROLE, tenderizer), true);
+        emit NewLiquifier(asset, account, liquifier);
+        registry.registerLiquifier(asset, account, liquifier);
+        assertEq(registry.hasRole(TENDERIZER_ROLE, liquifier), true);
     }
 
-    function test_RegisterTenderizer_RevertsIfExists() public {
+    function test_RegisterLiquifier_RevertsIfExists() public {
         vm.prank(owner);
         registry.grantRole(FACTORY_ROLE, factory);
         vm.startPrank(factory);
-        registry.registerTenderizer(asset, account, tenderizer);
-        vm.expectRevert(abi.encodeWithSelector(Registry.TenderizerAlreadyExists.selector, asset, account, tenderizer));
-        registry.registerTenderizer(asset, account, makeAddr("SECOND_TENDERIZER"));
+        registry.registerLiquifier(asset, account, liquifier);
+        vm.expectRevert(abi.encodeWithSelector(Registry.LiquifierAlreadyExists.selector, asset, account, liquifier));
+        registry.registerLiquifier(asset, account, makeAddr("SECOND_TENDERIZER"));
         vm.stopPrank();
     }
 
-    function test_RegisterTenderizer_RevertIfNotFactory() public {
+    function test_RegisterLiquifier_RevertIfNotFactory() public {
         vm.prank(owner);
         vm.expectRevert();
-        registry.registerTenderizer(asset, account, tenderizer);
+        registry.registerLiquifier(asset, account, liquifier);
     }
 
     function test_SetFee() public {

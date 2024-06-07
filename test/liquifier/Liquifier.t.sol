@@ -6,9 +6,9 @@ import { Test, stdError } from "forge-std/Test.sol";
 import { TestHelpers } from "test/helpers/Helpers.sol";
 import { StdCheats } from "forge-std/StdCheats.sol";
 import { IERC20, IERC20Metadata } from "core/lst/interfaces/IERC20.sol";
-import { Adapter, TenderizerHarness } from "test/tenderizer/Tenderizer.harness.sol";
+import { Adapter, LiquifierHarness } from "test/liquifier/Liquifier.harness.sol";
 import { AdapterDelegateCall } from "core/lst/adapters/Adapter.sol";
-import { TenderizerEvents } from "core/lst/tenderizer/TenderizerBase.sol";
+import { LiquifierEvents } from "core/lst/liquifier/LiquifierBase.sol";
 import { StaticCallFailed } from "core/lst/utils/StaticCall.sol";
 import { TgToken } from "core/lst/tendertoken/TgToken.sol";
 import { Unlocks } from "core/lst/unlocks/Unlocks.sol";
@@ -16,7 +16,7 @@ import { Registry } from "core/lst/registry/Registry.sol";
 import { ClonesWithImmutableArgs } from "clones/ClonesWithImmutableArgs.sol";
 import { addressToString } from "core/lst/utils/Utils.sol";
 
-contract TenderizerSetup is Test, TestHelpers {
+contract LiquifierSetup is Test, TestHelpers {
     using ClonesWithImmutableArgs for address;
 
     uint256 internal constant MAX_UINT = type(uint256).max;
@@ -27,7 +27,7 @@ contract TenderizerSetup is Test, TestHelpers {
     address internal asset = vm.addr(1);
     address internal staking = vm.addr(2);
 
-    TenderizerHarness internal tenderizer;
+    LiquifierHarness internal liquifier;
     address internal registry = vm.addr(3);
     address internal adapter = vm.addr(4);
     address internal unlocks = vm.addr(5);
@@ -54,29 +54,29 @@ contract TenderizerSetup is Test, TestHelpers {
         vm.mockCall(registry, abi.encodeCall(Registry.treasury, ()), abi.encode(treasury));
         vm.mockCall(asset, abi.encodeCall(IERC20Metadata.symbol, ()), abi.encode(symbol));
 
-        tenderizer =
-            TenderizerHarness(payable(address(new TenderizerHarness(registry, unlocks)).clone(abi.encodePacked(asset, validator))));
+        liquifier =
+            LiquifierHarness(payable(address(new LiquifierHarness(registry, unlocks)).clone(abi.encodePacked(asset, validator))));
     }
 }
 
 // solhint-disable func-name-mixedcase
-contract TenderizerTest is TenderizerSetup, TenderizerEvents {
+contract LiquifierTest is LiquifierSetup, LiquifierEvents {
     function test_Name() public {
         vm.expectCall(asset, abi.encodeCall(IERC20Metadata.symbol, ()));
-        assertEq(tenderizer.name(), string.concat("tender ", symbol, "-", addressToString(validator)), "invalid name");
+        assertEq(liquifier.name(), string.concat("tender ", symbol, "-", addressToString(validator)), "invalid name");
     }
 
     function test_Symbol() public {
         vm.expectCall(asset, abi.encodeCall(IERC20Metadata.symbol, ()));
-        assertEq(tenderizer.symbol(), string.concat("t", symbol, "-", addressToString(validator)), "invalid name");
+        assertEq(liquifier.symbol(), string.concat("t", symbol, "-", addressToString(validator)), "invalid name");
     }
 
     function test_InitialVaules() public {
-        assertEq(address(tenderizer.asset()), asset, "invalid asset");
-        assertEq(address(tenderizer.validator()), validator, "invalid validator");
-        assertEq(address(tenderizer.exposed_registry()), registry, "invalid registry");
-        assertEq(address(tenderizer.exposed_unlocks()), unlocks, "invalid unlocks");
-        assertEq(address(tenderizer.adapter()), adapter, "invalid adapter");
+        assertEq(address(liquifier.asset()), asset, "invalid asset");
+        assertEq(address(liquifier.validator()), validator, "invalid validator");
+        assertEq(address(liquifier.exposed_registry()), registry, "invalid registry");
+        assertEq(address(liquifier.exposed_unlocks()), unlocks, "invalid unlocks");
+        assertEq(address(liquifier.adapter()), adapter, "invalid adapter");
     }
 
     function test_PreviewDeposit() public {
@@ -84,17 +84,17 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
         uint256 amountOut = 99.5 ether;
         vm.mockCall(adapter, abi.encodeCall(Adapter.previewDeposit, (validator, amountIn)), abi.encode(amountOut));
         vm.expectCall(adapter, abi.encodeCall(Adapter.previewDeposit, (validator, amountIn)));
-        assertEq(tenderizer.previewDeposit(amountIn), amountOut);
+        assertEq(liquifier.previewDeposit(amountIn), amountOut);
     }
 
     function test_PreviewDeposit_RevertIfAdapterReverts() public {
         vm.mockCallRevert(adapter, abi.encodeCall(Adapter.previewDeposit, (validator, 1 ether)), ERROR_MESSAGE);
         vm.expectRevert(
             abi.encodeWithSelector(
-                StaticCallFailed.selector, address(tenderizer), abi.encodeCall(tenderizer._previewDeposit, (1 ether)), ""
+                StaticCallFailed.selector, address(liquifier), abi.encodeCall(liquifier._previewDeposit, (1 ether)), ""
             )
         );
-        tenderizer.previewDeposit(1 ether);
+        liquifier.previewDeposit(1 ether);
     }
 
     function test_UnlockMaturity() public {
@@ -102,7 +102,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
         uint256 unlockTime = block.timestamp;
         vm.mockCall(adapter, abi.encodeCall(Adapter.unlockMaturity, (unlockID)), abi.encode(unlockTime));
         vm.expectCall(adapter, abi.encodeCall(Adapter.unlockMaturity, (unlockID)));
-        assertEq(tenderizer.unlockMaturity(unlockID), unlockTime);
+        assertEq(liquifier.unlockMaturity(unlockID), unlockTime);
     }
 
     function test_PreviewWithdraw() public {
@@ -110,7 +110,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
         uint256 unlockID = 1;
         vm.mockCall(adapter, abi.encodeCall(Adapter.previewWithdraw, (unlockID)), abi.encode(amount));
         vm.expectCall(adapter, abi.encodeCall(Adapter.previewWithdraw, (unlockID)));
-        assertEq(tenderizer.previewWithdraw(unlockID), amount);
+        assertEq(liquifier.previewWithdraw(unlockID), amount);
     }
 
     function testFuzz_Transfer(uint256 amount) public {
@@ -120,8 +120,8 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.prank(account1);
         vm.expectCall(adapter, abi.encodeCall(Adapter.rebase, (validator, amount)));
-        vm.expectCall(address(tenderizer), abi.encodeCall(TgToken.transfer, (account2, amount)));
-        tenderizer.transfer(account2, amount);
+        vm.expectCall(address(liquifier), abi.encodeCall(TgToken.transfer, (account2, amount)));
+        liquifier.transfer(account2, amount);
     }
 
     function testFuzz_TransferFrom(uint256 amount) public {
@@ -130,11 +130,11 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.mockCall(adapter, abi.encodeCall(Adapter.rebase, (validator, amount)), abi.encode(amount));
         vm.expectCall(adapter, abi.encodeCall(Adapter.rebase, (validator, amount)));
-        vm.expectCall(address(tenderizer), abi.encodeCall(TgToken.transferFrom, (account1, account2, amount)));
+        vm.expectCall(address(liquifier), abi.encodeCall(TgToken.transferFrom, (account1, account2, amount)));
         vm.prank(account1);
-        tenderizer.approve(account2, amount);
+        liquifier.approve(account2, amount);
         vm.prank(account2);
-        tenderizer.transferFrom(account1, account2, amount);
+        liquifier.transferFrom(account1, account2, amount);
     }
 
     function testFuzz_Deposit(uint256 amountIn, uint256 amountOut) public {
@@ -142,19 +142,19 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
         amountOut = bound(amountOut, 1, MAX_UINT_SQRT);
 
         vm.mockCall(adapter, abi.encodeCall(Adapter.rebase, (validator, 0)), abi.encode(0));
-        vm.mockCall(asset, abi.encodeCall(IERC20.transferFrom, (account1, address(tenderizer), amountIn)), abi.encode(true));
+        vm.mockCall(asset, abi.encodeCall(IERC20.transferFrom, (account1, address(liquifier), amountIn)), abi.encode(true));
         vm.mockCall(adapter, abi.encodeCall(Adapter.stake, (validator, amountIn)), abi.encode(amountOut));
         vm.expectCall(adapter, abi.encodeCall(Adapter.rebase, (validator, 0)));
-        vm.expectCall(asset, abi.encodeCall(IERC20.transferFrom, (account1, address(tenderizer), amountIn)));
+        vm.expectCall(asset, abi.encodeCall(IERC20.transferFrom, (account1, address(liquifier), amountIn)));
         vm.expectCall(adapter, abi.encodeCall(Adapter.stake, (validator, amountIn)));
         vm.prank(account1);
 
         vm.expectEmit(true, true, true, true);
         emit Deposit(account1, account2, amountIn, amountOut);
-        uint256 actualAssets = tenderizer.deposit(account2, amountIn);
+        uint256 actualAssets = liquifier.deposit(account2, amountIn);
 
         assertEq(actualAssets, amountOut, "invalid return value");
-        assertEq(tenderizer.balanceOf(address(account2)), amountOut, "mint failed");
+        assertEq(liquifier.balanceOf(address(account2)), amountOut, "mint failed");
     }
 
     function test_Deposit_RevertIfStakeReverts() public {
@@ -167,25 +167,25 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
             abi.encodeWithSignature("Error(string)", ERROR_MESSAGE)
         );
         vm.expectRevert(abi.encodeWithSelector(AdapterDelegateCall.AdapterDelegateCallFailed.selector, ERROR_MESSAGE));
-        tenderizer.deposit(account1, depositAmount);
+        liquifier.deposit(account1, depositAmount);
     }
 
     function test_Deposit_RevertIfZeroAmount() public {
         vm.mockCall(adapter, abi.encodeCall(Adapter.rebase, (validator, 0)), abi.encode(0));
         vm.mockCall(adapter, abi.encodeCall(Adapter.stake, (validator, 0)), abi.encode(0));
         vm.expectRevert(TgToken.ZeroAmount.selector);
-        tenderizer.deposit(account1, 0);
+        liquifier.deposit(account1, 0);
     }
 
     function test_Deposit_RevertIfAssetTransferFails() public {
         uint256 depositAmount = 100 ether;
         vm.mockCall(adapter, abi.encodeCall(Adapter.rebase, (validator, 0)), abi.encode(0));
         vm.mockCall(adapter, abi.encodeCall(Adapter.previewDeposit, (validator, depositAmount)), abi.encode(depositAmount));
-        vm.mockCall(asset, abi.encodeCall(IERC20.transferFrom, (account1, address(tenderizer), depositAmount)), abi.encode(false));
+        vm.mockCall(asset, abi.encodeCall(IERC20.transferFrom, (account1, address(liquifier), depositAmount)), abi.encode(false));
         vm.prank(account1);
 
         vm.expectRevert("TRANSFER_FROM_FAILED");
-        tenderizer.deposit(account1, depositAmount);
+        liquifier.deposit(account1, depositAmount);
     }
 
     function testFuzz_Unlock(uint256 amount) public {
@@ -201,10 +201,10 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
         vm.expectEmit(true, true, true, true);
         emit Unlock(account1, amount, unlockID);
         vm.prank(account1);
-        uint256 returnedUnlockID = tenderizer.unlock(amount);
+        uint256 returnedUnlockID = liquifier.unlock(amount);
 
         assertEq(returnedUnlockID, unlockID, "invalid return value");
-        assertEq(tenderizer.balanceOf(account1), depositAmount - amount, "burn failed");
+        assertEq(liquifier.balanceOf(account1), depositAmount - amount, "burn failed");
     }
 
     function test_Unlock_RevertIfAdapterCallReverts() public {
@@ -220,7 +220,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.prank(account1);
         vm.expectRevert(abi.encodeWithSelector(AdapterDelegateCall.AdapterDelegateCallFailed.selector, ERROR_MESSAGE));
-        tenderizer.unlock(unlockAmount);
+        liquifier.unlock(unlockAmount);
     }
 
     function test_unlock_RevertIfCreateUnlockFails() public {
@@ -238,13 +238,13 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.prank(account1);
         vm.expectRevert(ERROR_MESSAGE);
-        tenderizer.unlock(unlockAmount);
+        liquifier.unlock(unlockAmount);
     }
 
     function test_Unlock_RevertIfZeroAmount() public {
         _unlockPreReq(account1, 1 ether, 0, 0);
         vm.expectRevert(abi.encodeWithSelector(TgToken.ZeroAmount.selector));
-        tenderizer.unlock(0);
+        liquifier.unlock(0);
     }
 
     function test_Unlock_RevertIfNotEnoughTenderTokens() public {
@@ -255,7 +255,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.prank(account1);
         vm.expectRevert(stdError.arithmeticError);
-        tenderizer.unlock(unlockAmount);
+        liquifier.unlock(unlockAmount);
     }
 
     function testFuzz_Withdraw(uint256 amount) public {
@@ -271,7 +271,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
         vm.expectEmit(true, true, true, true);
         emit Withdraw(account2, amount, unlockID);
         vm.prank(account1);
-        uint256 returnedAssets = tenderizer.withdraw(account2, unlockID);
+        uint256 returnedAssets = liquifier.withdraw(account2, unlockID);
 
         assertEq(returnedAssets, amount, "invalid return value");
     }
@@ -286,7 +286,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
         );
 
         vm.expectRevert(abi.encodeWithSelector(AdapterDelegateCall.AdapterDelegateCallFailed.selector, ERROR_MESSAGE));
-        tenderizer.withdraw(account1, unlockID);
+        liquifier.withdraw(account1, unlockID);
     }
 
     function test_Withdraw_RevertIfUseUnlockFails() public {
@@ -303,7 +303,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.prank(account1);
         vm.expectRevert(ERROR_MESSAGE);
-        tenderizer.withdraw(account2, unlockID);
+        liquifier.withdraw(account2, unlockID);
     }
 
     function testFuzz_Rebase_Positive(uint256 depositSeed, uint256 rewards, uint256 feeRate) public {
@@ -327,16 +327,16 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.expectEmit(true, true, true, true);
         emit Rebase(totalDeposit, newStake);
-        tenderizer.rebase();
+        liquifier.rebase();
 
-        assertLt(absDiff(tenderizer.totalSupply(), newStake), 5, "invalid totalSupply");
+        assertLt(absDiff(liquifier.totalSupply(), newStake), 5, "invalid totalSupply");
         assertLt(
-            absDiff(tenderizer.balanceOf(account1), (newStake - expFees) * deposit1 / totalDeposit), 5, "invalid account1 balance"
+            absDiff(liquifier.balanceOf(account1), (newStake - expFees) * deposit1 / totalDeposit), 5, "invalid account1 balance"
         );
         assertLt(
-            absDiff(tenderizer.balanceOf(account2), (newStake - expFees) * deposit2 / totalDeposit), 5, "invalid account2 balance"
+            absDiff(liquifier.balanceOf(account2), (newStake - expFees) * deposit2 / totalDeposit), 5, "invalid account2 balance"
         );
-        assertLt(absDiff(tenderizer.balanceOf(address(treasury)), expFees), 5, "invalid fees minted");
+        assertLt(absDiff(liquifier.balanceOf(address(treasury)), expFees), 5, "invalid fees minted");
     }
 
     function testFuzz_Rebase_Negative(uint256 depositSeed, uint256 slash) public {
@@ -354,11 +354,11 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.expectEmit(true, true, true, true);
         emit Rebase(totalDeposit, newStake);
-        tenderizer.rebase();
+        liquifier.rebase();
 
-        assertEq(tenderizer.totalSupply(), newStake, "invalid totalSupply");
-        assertEq(tenderizer.balanceOf(account1), (newStake * deposit1) / totalDeposit, "invalid account1 balance");
-        assertEq(tenderizer.balanceOf(account2), (newStake * deposit2) / totalDeposit, "invalid account2 balance");
+        assertEq(liquifier.totalSupply(), newStake, "invalid totalSupply");
+        assertEq(liquifier.balanceOf(account1), (newStake * deposit1) / totalDeposit, "invalid account1 balance");
+        assertEq(liquifier.balanceOf(account2), (newStake * deposit2) / totalDeposit, "invalid account2 balance");
     }
 
     function test_Rebase_Neutral() public {
@@ -374,11 +374,11 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.expectEmit(true, true, true, true);
         emit Rebase(totalDeposit, totalDeposit);
-        tenderizer.rebase();
+        liquifier.rebase();
 
-        assertEq(tenderizer.totalSupply(), totalDeposit, "invalid totalSupply");
-        assertEq(tenderizer.balanceOf(account1), deposit1, "invalid account1 balance");
-        assertEq(tenderizer.balanceOf(account2), deposit2, "invalid account2 balance");
+        assertEq(liquifier.totalSupply(), totalDeposit, "invalid totalSupply");
+        assertEq(liquifier.balanceOf(account1), deposit1, "invalid account1 balance");
+        assertEq(liquifier.balanceOf(account2), deposit2, "invalid account2 balance");
     }
 
     function _deposit(address account, uint256 amount, uint256 totalPreviousDeposits) internal {
@@ -387,7 +387,7 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
         vm.mockCall(adapter, abi.encodeCall(Adapter.stake, (validator, amount)), abi.encode(amount));
 
         vm.prank(account);
-        tenderizer.deposit(account, amount);
+        liquifier.deposit(account, amount);
     }
 
     function _unlockPreReq(address account, uint256 depositAmount, uint256 unlockAmount, uint256 unlockID) internal {

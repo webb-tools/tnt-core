@@ -11,7 +11,7 @@ source .env
 export REGISTRY=0x6232894e592F104FB561c1Fb59a52ea01ee7D867
 export FACTORY=0x62536191D4EB10D4CA5909D60232593A1b40BE10
 
-# forge script script/Tenderize_Deploy.s.sol:Tenderize_Deploy --rpc-url ${ARBITRUM_GOERLI_RPC} --broadcast --private-key $PRIVATE_KEY -vvvv
+# forge script script/Liquifie_Deploy.s.sol:Liquifie_Deploy --rpc-url ${ARBITRUM_GOERLI_RPC} --broadcast --private-key $PRIVATE_KEY -vvvv
 
 
 # Deploy Livepeer

@@ -15,11 +15,11 @@ import {
     GRAPH_STAKING,
     MAX_PPM
 } from "core/lst/adapters/GraphAdapter.sol";
-import { Tenderizer, TenderizerEvents } from "core/lst/tenderizer/Tenderizer.sol";
+import { Liquifier, LiquifierEvents } from "core/lst/liquifier/Liquifier.sol";
 import { Unlocks, Metadata } from "core/lst/unlocks/Unlocks.sol";
 import { ERC721Receiver } from "core/lst/utils/ERC721Receiver.sol";
 import { Factory } from "core/lst/factory/Factory.sol";
-import { TenderizerFixture, tenderizerFixture } from "./Fixture.sol";
+import { LiquifierFixture, liquifierFixture } from "./Fixture.sol";
 
 address constant INDEXER_1 = 0x4e5c87772C29381bCaBC58C3f182B6633B5a274a;
 address constant GOVERNOR = 0x8C6de8F8D562f3382417340A6994601eE08D3809;
@@ -47,12 +47,12 @@ interface IGraphCurationTest {
     function mint(bytes32 _subgraphDeploymentID, uint256 _tokensIn, uint256 _signalOutMin) external returns (uint256, uint256);
 }
 
-contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
-    TenderizerFixture fixture;
+contract GraphForkTest is Test, LiquifierEvents, ERC721Receiver {
+    LiquifierFixture fixture;
     GraphAdapter adapter;
     address immutable MINTER_ROLE = makeAddr("MINTER_ROLE");
 
-    event NewTenderizer(address indexed asset, address indexed validator, address tenderizer);
+    event NewLiquifier(address indexed asset, address indexed validator, address liquifier);
 
     function mintGRT(address to, uint256 amount) public {
         vm.prank(MINTER_ROLE);
@@ -62,7 +62,7 @@ contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
     function setUp() public {
         bytes32 salt = bytes32(uint256(1));
         vm.createSelectFork(vm.envString("ARBITRUM_RPC"));
-        fixture = tenderizerFixture();
+        fixture = liquifierFixture();
         adapter = new GraphAdapter{ salt: salt }();
         fixture.registry.registerAdapter(address(GRT), address(adapter));
 
@@ -102,74 +102,74 @@ contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
         assertEq(preview, expected, "previewDeposit incorrect");
     }
 
-    function test_factory_newTenderizer() public {
+    function test_factory_newLiquifier() public {
         // Revert with inactive indexer
         address inactiveIndexer = makeAddr("INACTIVE_INDEXER");
         vm.expectRevert(abi.encodeWithSelector(Factory.NotValidator.selector, (inactiveIndexer)));
-        fixture.factory.newTenderizer(address(GRT), inactiveIndexer);
+        fixture.factory.newLiquifier(address(GRT), inactiveIndexer);
 
-        // Deploy tenderizer
+        // Deploy liquifier
         vm.expectEmit({ checkTopic1: true, checkTopic2: true, checkTopic3: false, checkData: false });
-        emit NewTenderizer(address(GRT), INDEXER_1, address(0x0));
-        fixture.factory.newTenderizer(address(GRT), INDEXER_1);
+        emit NewLiquifier(address(GRT), INDEXER_1, address(0x0));
+        fixture.factory.newLiquifier(address(GRT), INDEXER_1);
     }
 
     function test_deposit() public {
         uint256 depositAmount = 100_000 ether;
 
-        Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(GRT), INDEXER_1)));
+        Liquifier liquifier = Liquifier(payable(fixture.factory.newLiquifier(address(GRT), INDEXER_1)));
 
         mintGRT(address(this), depositAmount);
-        GRT.approve(address(tenderizer), depositAmount);
+        GRT.approve(address(liquifier), depositAmount);
 
         uint256 delTax = GRAPH_STAKING.delegationTaxPercentage();
         IGraphStaking.DelegationPool memory delPool = GRAPH_STAKING.delegationPools(INDEXER_1);
-        IGraphStaking.Delegation memory delegation = GRAPH_STAKING.getDelegation(INDEXER_1, address(tenderizer));
+        IGraphStaking.Delegation memory delegation = GRAPH_STAKING.getDelegation(INDEXER_1, address(liquifier));
 
         uint256 actualDeposit = depositAmount - (depositAmount * delTax / MAX_PPM);
         uint256 sharesOut = delPool.tokens != 0 ? actualDeposit * delPool.shares / delPool.tokens : actualDeposit;
         uint256 expected = sharesOut * (delPool.tokens + actualDeposit) / (delPool.shares + sharesOut);
-        uint256 preview = tenderizer.previewDeposit(depositAmount);
+        uint256 preview = liquifier.previewDeposit(depositAmount);
 
         // TODO: this assertion might not hold with multiple deposits
         // and rounding error upon share calculation
         assertEq(preview, expected, "previewDeposit incorrect");
         vm.expectEmit({ checkTopic1: true, checkTopic2: true, checkTopic3: false, checkData: true });
         emit Deposit(address(this), address(this), depositAmount, expected);
-        tenderizer.deposit(address(this), depositAmount);
+        liquifier.deposit(address(this), depositAmount);
 
-        assertEq(tenderizer.totalSupply(), expected, "total supply incorrect");
-        assertEq(tenderizer.balanceOf(address(this)), expected, "balance incorrect");
+        assertEq(liquifier.totalSupply(), expected, "total supply incorrect");
+        assertEq(liquifier.balanceOf(address(this)), expected, "balance incorrect");
 
         delPool = GRAPH_STAKING.delegationPools(INDEXER_1);
-        delegation = GRAPH_STAKING.getDelegation(INDEXER_1, address(tenderizer));
+        delegation = GRAPH_STAKING.getDelegation(INDEXER_1, address(liquifier));
         uint256 staked = delegation.shares * delPool.tokens / delPool.shares;
-        assertEq(tenderizer.totalSupply(), staked, "total staked incorrect");
+        assertEq(liquifier.totalSupply(), staked, "total staked incorrect");
     }
 
     function test_unlock_withdraw_simple() public {
         uint256 depositAmount = 100_000 ether;
         uint256 unstakeAmount = 50_000 ether;
-        Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(GRT), INDEXER_1)));
+        Liquifier liquifier = Liquifier(payable(fixture.factory.newLiquifier(address(GRT), INDEXER_1)));
         mintGRT(address(this), depositAmount);
-        GRT.approve(address(tenderizer), depositAmount);
-        uint256 tgTokenOut = tenderizer.deposit(address(this), depositAmount);
+        GRT.approve(address(liquifier), depositAmount);
+        uint256 tgTokenOut = liquifier.deposit(address(this), depositAmount);
 
         vm.expectEmit();
         emit Unlock(address(this), unstakeAmount, 1);
         IGraphStaking.DelegationPool memory delPool = GRAPH_STAKING.delegationPools(INDEXER_1);
 
-        uint256 unlockID = tenderizer.unlock(unstakeAmount);
+        uint256 unlockID = liquifier.unlock(unstakeAmount);
         assertEq(unlockID, 1, "unlockID incorrect");
-        assertEq(tenderizer.totalSupply(), tgTokenOut - unstakeAmount, "total supply incorrect");
-        assertEq(tenderizer.balanceOf(address(this)), tgTokenOut - unstakeAmount, "balance incorrect");
-        IGraphStaking.Delegation memory delegation = GRAPH_STAKING.getDelegation(INDEXER_1, address(tenderizer));
+        assertEq(liquifier.totalSupply(), tgTokenOut - unstakeAmount, "total supply incorrect");
+        assertEq(liquifier.balanceOf(address(this)), tgTokenOut - unstakeAmount, "balance incorrect");
+        IGraphStaking.Delegation memory delegation = GRAPH_STAKING.getDelegation(INDEXER_1, address(liquifier));
         uint256 actualUnstakedAmount = unstakeAmount * delPool.shares / delPool.tokens * delPool.tokens / delPool.shares;
         assertEq(delegation.tokensLocked, actualUnstakedAmount, "tokens locked incorrect");
 
-        assertEq(tenderizer.unlockMaturity(unlockID), block.number + adapter.unlockTime(), "maturity incorrect");
+        assertEq(liquifier.unlockMaturity(unlockID), block.number + adapter.unlockTime(), "maturity incorrect");
 
-        uint256 tokenId = uint256(bytes32(abi.encodePacked(tenderizer, uint96(unlockID))));
+        uint256 tokenId = uint256(bytes32(abi.encodePacked(liquifier, uint96(unlockID))));
 
         Metadata memory metadata = fixture.unlocks.getMetadata(tokenId);
         assertEq(metadata.amount, unstakeAmount, "metadata amount incorrect");
@@ -189,9 +189,9 @@ contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
         uint256 grtBalBeforeWithdraw = GRT.balanceOf(address(this));
         vm.expectEmit();
         emit Withdraw(address(this), actualUnstakedAmount, unlockID);
-        uint256 withdrawn = Tenderizer(tenderizer).withdraw(address(this), unlockID);
+        uint256 withdrawn = Liquifier(liquifier).withdraw(address(this), unlockID);
         assertEq(withdrawn, actualUnstakedAmount, "withdrawn amount incorrect");
-        delegation = GRAPH_STAKING.getDelegation(INDEXER_1, address(tenderizer));
+        delegation = GRAPH_STAKING.getDelegation(INDEXER_1, address(liquifier));
         assertEq(delegation.tokensLocked, 0, "tokens locked not 0");
         vm.expectRevert("NOT_MINTED");
         fixture.unlocks.ownerOf(tokenId);
@@ -199,7 +199,7 @@ contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
     }
 
     function test_rebase() public {
-        Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(GRT), INDEXER_1)));
+        Liquifier liquifier = Liquifier(payable(fixture.factory.newLiquifier(address(GRT), INDEXER_1)));
 
         uint256 epochLength = IGraphEpochsTest(address(GRAPH_EPOCHS)).epochLength();
         // ======================================
@@ -207,8 +207,8 @@ contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
         uint256 depositAmount = 100_000 ether;
 
         mintGRT(address(this), depositAmount);
-        GRT.approve(address(tenderizer), depositAmount);
-        uint256 tgTokenOut = tenderizer.deposit(address(this), depositAmount);
+        GRT.approve(address(liquifier), depositAmount);
+        uint256 tgTokenOut = liquifier.deposit(address(this), depositAmount);
         vm.roll(block.number + epochLength);
         // ======================================
 
@@ -249,12 +249,12 @@ contract GraphForkTest is Test, TenderizerEvents, ERC721Receiver {
         {
             IGraphStaking.DelegationPool memory delPool = GRAPH_STAKING.delegationPools(INDEXER_1);
 
-            tenderizer.rebase();
-            uint256 delShares = GRAPH_STAKING.getDelegation(INDEXER_1, address(tenderizer)).shares;
+            liquifier.rebase();
+            uint256 delShares = GRAPH_STAKING.getDelegation(INDEXER_1, address(liquifier)).shares;
             uint256 totalStaked = delShares * delPool.tokens / delPool.shares;
-            assertEq(tenderizer.totalSupply(), totalStaked, "total supply incorrect");
-            assertEq(tenderizer.balanceOf(address(this)), totalStaked, "balance incorrect");
-            assertTrue(tenderizer.balanceOf(address(this)) > tgTokenOut, "balance not greater than before");
+            assertEq(liquifier.totalSupply(), totalStaked, "total supply incorrect");
+            assertEq(liquifier.balanceOf(address(this)), totalStaked, "balance incorrect");
+            assertTrue(liquifier.balanceOf(address(this)) > tgTokenOut, "balance not greater than before");
         }
     }
 

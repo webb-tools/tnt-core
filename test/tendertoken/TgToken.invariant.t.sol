@@ -50,7 +50,7 @@ contract Handler is Test, TestHelpers {
     uint256 public ghost_mintedSum;
     uint256 public ghost_burnedSum;
     uint256 public TOTAL_UNDERLYING_SUPPLY = sqrt(type(uint256).max - 1);
-    uint256 public ghost_notTenderizedSupply = TOTAL_UNDERLYING_SUPPLY;
+    uint256 public ghost_notLiquifiedSupply = TOTAL_UNDERLYING_SUPPLY;
 
     AddressSet internal holders;
     AddressSet internal actors;
@@ -92,12 +92,12 @@ contract Handler is Test, TestHelpers {
     }
 
     function mint(uint256 amount) public countCall("mint") {
-        if (ghost_notTenderizedSupply == 0) {
+        if (ghost_notLiquifiedSupply == 0) {
             return;
         }
         createActor();
 
-        amount = bound(amount, 1, ghost_notTenderizedSupply);
+        amount = bound(amount, 1, ghost_notLiquifiedSupply);
 
         // Ignore cases where x * y overflows or denominator is 0
         unchecked {
@@ -119,7 +119,7 @@ contract Handler is Test, TestHelpers {
             return;
         }
 
-        ghost_notTenderizedSupply -= amount;
+        ghost_notLiquifiedSupply -= amount;
         ghost_mintedSum += amount;
 
         tgtoken.mint(currentActor, amount);
@@ -219,14 +219,14 @@ contract Handler is Test, TestHelpers {
         }
 
         ghost_burnedSum += amount;
-        ghost_notTenderizedSupply += amount;
+        ghost_notLiquifiedSupply += amount;
         tgtoken.burn(currentActor, amount);
     }
 
     function setTotalSupply(uint256 totalSupply) public countCall("setTotalSupply") {
         totalSupply = bound(totalSupply, 1, TOTAL_UNDERLYING_SUPPLY);
         tgtoken.setTotalSupply(totalSupply);
-        ghost_notTenderizedSupply = TOTAL_UNDERLYING_SUPPLY - totalSupply;
+        ghost_notLiquifiedSupply = TOTAL_UNDERLYING_SUPPLY - totalSupply;
     }
 }
 
@@ -259,9 +259,9 @@ contract TgTokenInvariants is Test {
         excludeSender(address(this));
     }
 
-    // total supply should equal  underlying - notTenderized
-    function invariant_underlyingSubNotTenderized() public {
-        assertEq(tgtoken.totalSupply(), handler.TOTAL_UNDERLYING_SUPPLY() - handler.ghost_notTenderizedSupply());
+    // total supply should equal  underlying - notLiquified
+    function invariant_underlyingSubNotLiquified() public {
+        assertEq(tgtoken.totalSupply(), handler.TOTAL_UNDERLYING_SUPPLY() - handler.ghost_notLiquifiedSupply());
     }
 
     // sum of holder balances should equal total supply

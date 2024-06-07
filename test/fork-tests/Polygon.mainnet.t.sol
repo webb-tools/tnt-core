@@ -15,11 +15,11 @@ import {
     _getValidatorSharesContract
 } from "core/lst/adapters/PolygonAdapter.sol";
 import { IPolygonStakeManager, IPolygonValidatorShares } from "core/lst/adapters/interfaces/IPolygon.sol";
-import { Tenderizer, TenderizerEvents } from "core/lst/tenderizer/Tenderizer.sol";
+import { Liquifier, LiquifierEvents } from "core/lst/liquifier/Liquifier.sol";
 import { Unlocks, Metadata } from "core/lst/unlocks/Unlocks.sol";
 import { ERC721Receiver } from "core/lst/utils/ERC721Receiver.sol";
 import { Factory } from "core/lst/factory/Factory.sol";
-import { TenderizerFixture, tenderizerFixture } from "./Fixture.sol";
+import { LiquifierFixture, liquifierFixture } from "./Fixture.sol";
 
 address constant VALIDATOR_1 = 0xe7DB0D2384587956ef9d47304E96236022cCE3Af; // 0xeA105Ab4e3F01f7f8DA09Cb84AB501Aeb02E9FC7;
 address constant TOKEN_HOLDER = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
@@ -34,13 +34,13 @@ interface IPolygonValidatorSharesTest is IPolygonValidatorShares {
     function initalRewardPerShare(address user) external view returns (uint256);
 }
 
-contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
-    TenderizerFixture fixture;
+contract PolygonForkTest is Test, LiquifierEvents, ERC721Receiver {
+    LiquifierFixture fixture;
     PolygonAdapter adapter;
 
     uint256 balance;
 
-    event NewTenderizer(address indexed asset, address indexed validator, address tenderizer);
+    event NewLiquifier(address indexed asset, address indexed validator, address liquifier);
 
     function setRewards(uint256 amount, uint256 initialRewardPerShare) internal returns (uint256 rewardPerShare) {
         IPolygonValidatorShares valShares = _getValidatorSharesContract(adapter.getValidatorId(VALIDATOR_1));
@@ -56,7 +56,7 @@ contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
     function setUp() public {
         bytes32 salt = bytes32(uint256(1));
         vm.createSelectFork(vm.envString("MAINNET_RPC"));
-        fixture = tenderizerFixture();
+        fixture = liquifierFixture();
         adapter = new PolygonAdapter{ salt: salt }();
         fixture.registry.registerAdapter(address(POL), address(adapter));
         balance = POL.balanceOf(TOKEN_HOLDER);
@@ -82,16 +82,16 @@ contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
         adapter.isValidator(makeAddr("NOT VALIDATOR"));
     }
 
-    function test_factory_newTenderizer() public {
+    function test_factory_newLiquifier() public {
         // Revert with inactive validator
         address inactiveValidator = makeAddr("INACTIVE_VALIDATOR");
         vm.expectRevert();
-        fixture.factory.newTenderizer(address(POL), inactiveValidator);
+        fixture.factory.newLiquifier(address(POL), inactiveValidator);
 
-        // Deploy tenderizer
+        // Deploy liquifier
         vm.expectEmit({ checkTopic1: true, checkTopic2: true, checkTopic3: false, checkData: false });
-        emit NewTenderizer(address(POL), VALIDATOR_1, address(0x0));
-        fixture.factory.newTenderizer(address(POL), VALIDATOR_1);
+        emit NewLiquifier(address(POL), VALIDATOR_1, address(0x0));
+        fixture.factory.newLiquifier(address(POL), VALIDATOR_1);
     }
 
     function testFuzz_previewDeposit(uint256 amount) public {
@@ -114,12 +114,12 @@ contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
     function testFuzz_deposit(uint256 amount) public {
         amount = bound(amount, 1, balance);
 
-        Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(POL), VALIDATOR_1)));
+        Liquifier liquifier = Liquifier(payable(fixture.factory.newLiquifier(address(POL), VALIDATOR_1)));
 
         IPolygonValidatorShares valShares = _getValidatorSharesContract(adapter.getValidatorId(VALIDATOR_1));
         uint256 totalShares = valShares.totalSupply();
         uint256 delegatedAmount = POLYGON_STAKEMANAGER.delegatedAmount(adapter.getValidatorId(VALIDATOR_1));
-        uint256 preview = tenderizer.previewDeposit(amount);
+        uint256 preview = liquifier.previewDeposit(amount);
 
         uint256 fxRateBefore = delegatedAmount * EXCHANGE_RATE_PRECISION_HIGH / totalShares;
         assertEq(fxRateBefore, valShares.exchangeRate());
@@ -129,33 +129,33 @@ contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
         uint256 expectedOut = mintedPolShares
             * ((delegatedAmount + amountToTransfer) * EXCHANGE_RATE_PRECISION_HIGH / (totalShares + mintedPolShares))
             / EXCHANGE_RATE_PRECISION_HIGH;
-        POL.approve(address(tenderizer), amount);
+        POL.approve(address(liquifier), amount);
         vm.expectEmit({ checkTopic1: true, checkTopic2: true, checkTopic3: false, checkData: true });
         emit Deposit(address(this), address(this), amount, expectedOut);
-        uint256 tgTokenOut = tenderizer.deposit(address(this), amount);
+        uint256 tgTokenOut = liquifier.deposit(address(this), amount);
         assertEq(preview, tgTokenOut, "previewDeposit incorrect");
         uint256 fxRateAfter = (delegatedAmount + amountToTransfer) * EXCHANGE_RATE_PRECISION_HIGH / (totalShares + mintedPolShares);
         assertEq(fxRateAfter, valShares.exchangeRate());
 
-        assertEq(tenderizer.totalSupply(), expectedOut, "total supply incorrect");
-        assertEq(tenderizer.balanceOf(address(this)), expectedOut, "balance incorrect");
+        assertEq(liquifier.totalSupply(), expectedOut, "total supply incorrect");
+        assertEq(liquifier.balanceOf(address(this)), expectedOut, "balance incorrect");
     }
 
     function test_unlock_withdraw_simple() public {
         uint256 depositAmount = 100_000 ether;
         uint256 unstakeAmount = 25_000 ether;
-        Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(POL), VALIDATOR_1)));
-        POL.approve(address(tenderizer), depositAmount);
-        tenderizer.deposit(address(this), depositAmount);
+        Liquifier liquifier = Liquifier(payable(fixture.factory.newLiquifier(address(POL), VALIDATOR_1)));
+        POL.approve(address(liquifier), depositAmount);
+        liquifier.deposit(address(this), depositAmount);
 
         vm.expectEmit();
         emit Unlock(address(this), unstakeAmount, 1);
-        uint256 unlockID = tenderizer.unlock(unstakeAmount);
+        uint256 unlockID = liquifier.unlock(unstakeAmount);
         assertEq(unlockID, 1, "unlockID incorrect");
 
-        assertEq(tenderizer.unlockMaturity(unlockID), POLYGON_STAKEMANAGER.epoch() + WITHDRAW_DELAY, "unlockMaturity incorrect");
+        assertEq(liquifier.unlockMaturity(unlockID), POLYGON_STAKEMANAGER.epoch() + WITHDRAW_DELAY, "unlockMaturity incorrect");
 
-        uint256 tokenId = uint256(bytes32(abi.encodePacked(address(tenderizer), uint96(unlockID))));
+        uint256 tokenId = uint256(bytes32(abi.encodePacked(address(liquifier), uint96(unlockID))));
         Metadata memory metadata = fixture.unlocks.getMetadata(tokenId);
         assertEq(metadata.amount, unstakeAmount, "amount incorrect");
         assertEq(metadata.unlockId, unlockID, "unlockID incorrect");
@@ -177,10 +177,10 @@ contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
         uint256 polBalBefore = POL.balanceOf(address(this));
         vm.expectEmit();
         emit Withdraw(address(this), unstakeAmount, unlockID);
-        uint256 withdrawn = tenderizer.withdraw(address(this), unlockID);
+        uint256 withdrawn = liquifier.withdraw(address(this), unlockID);
         assertEq(withdrawn, unstakeAmount, "withdrawn incorrect");
         assertEq(POL.balanceOf(address(this)), polBalBefore + unstakeAmount, "balance incorrect");
-        assertEq(tenderizer.totalSupply(), depositAmount - unstakeAmount, "total supply incorrect");
+        assertEq(liquifier.totalSupply(), depositAmount - unstakeAmount, "total supply incorrect");
         vm.expectRevert("NOT_MINTED");
         fixture.unlocks.ownerOf(tokenId);
     }
@@ -198,42 +198,42 @@ contract PolygonForkTest is Test, TenderizerEvents, ERC721Receiver {
         POL.transfer(HOLDER_1, HOLDER_1_DEPOSIT);
         POL.transfer(HOLDER_2, HOLDER_2_DEPOSIT);
 
-        Tenderizer tenderizer = Tenderizer(payable(fixture.factory.newTenderizer(address(POL), VALIDATOR_1)));
+        Liquifier liquifier = Liquifier(payable(fixture.factory.newLiquifier(address(POL), VALIDATOR_1)));
         vm.startPrank(HOLDER_1);
-        POL.approve(address(tenderizer), HOLDER_1_DEPOSIT);
-        uint256 tgTokenOut_1 = tenderizer.deposit(HOLDER_1, HOLDER_1_DEPOSIT);
+        POL.approve(address(liquifier), HOLDER_1_DEPOSIT);
+        uint256 tgTokenOut_1 = liquifier.deposit(HOLDER_1, HOLDER_1_DEPOSIT);
         vm.stopPrank();
 
         vm.startPrank(HOLDER_2);
-        POL.approve(address(tenderizer), HOLDER_2_DEPOSIT);
-        uint256 tgTokenOut_2 = tenderizer.deposit(HOLDER_2, HOLDER_2_DEPOSIT);
+        POL.approve(address(liquifier), HOLDER_2_DEPOSIT);
+        uint256 tgTokenOut_2 = liquifier.deposit(HOLDER_2, HOLDER_2_DEPOSIT);
         vm.stopPrank();
         IPolygonValidatorShares valShares = _getValidatorSharesContract(adapter.getValidatorId(VALIDATOR_1));
 
-        uint256 tenderizerValShares = valShares.balanceOf(address(tenderizer));
-        uint256 initialRewardPerShare = IPolygonValidatorSharesTest(address(valShares)).initalRewardPerShare(address(tenderizer));
+        uint256 liquifierValShares = valShares.balanceOf(address(liquifier));
+        uint256 initialRewardPerShare = IPolygonValidatorSharesTest(address(valShares)).initalRewardPerShare(address(liquifier));
         uint256 rewardPerShare = setRewards(rewardAmount, initialRewardPerShare);
         // Due to logic in the Polygon contracts the actual reward amount will be rewardAmount -1
-        // uint256 tenderizerRewardAfterFee = rewardsForTenderizer - rewardsForTenderizer * 5e3 / 1e6;
-        uint256 tenderizerRewards = tenderizerValShares * (rewardPerShare - initialRewardPerShare) / REWARD_PRECISION;
+        // uint256 liquifierRewardAfterFee = rewardsForLiquifier - rewardsForLiquifier * 5e3 / 1e6;
+        uint256 liquifierRewards = liquifierValShares * (rewardPerShare - initialRewardPerShare) / REWARD_PRECISION;
         vm.expectEmit();
-        emit Rebase(tgTokenOut_1 + tgTokenOut_2, tgTokenOut_1 + tgTokenOut_2 + tenderizerRewards);
-        tenderizer.rebase();
+        emit Rebase(tgTokenOut_1 + tgTokenOut_2, tgTokenOut_1 + tgTokenOut_2 + liquifierRewards);
+        liquifier.rebase();
 
         assertEq(
-            tenderizer.totalSupply(),
-            valShares.balanceOf(address(tenderizer)) * valShares.exchangeRate() / EXCHANGE_RATE_PRECISION_HIGH,
+            liquifier.totalSupply(),
+            valShares.balanceOf(address(liquifier)) * valShares.exchangeRate() / EXCHANGE_RATE_PRECISION_HIGH,
             "total supply incorrect vs total staked incorrect"
         );
-        assertEq(tenderizer.totalSupply(), tgTokenOut_1 + tgTokenOut_2 + tenderizerRewards, "total supply incorrect");
+        assertEq(liquifier.totalSupply(), tgTokenOut_1 + tgTokenOut_2 + liquifierRewards, "total supply incorrect");
         assertEq(
-            tenderizer.balanceOf(HOLDER_1),
-            tgTokenOut_1 + tenderizerRewards * tgTokenOut_1 / (tgTokenOut_1 + tgTokenOut_2),
+            liquifier.balanceOf(HOLDER_1),
+            tgTokenOut_1 + liquifierRewards * tgTokenOut_1 / (tgTokenOut_1 + tgTokenOut_2),
             "balance 1 incorrect"
         );
         assertEq(
-            tenderizer.balanceOf(HOLDER_2),
-            tgTokenOut_2 + tenderizerRewards * tgTokenOut_2 / (tgTokenOut_1 + tgTokenOut_2),
+            liquifier.balanceOf(HOLDER_2),
+            tgTokenOut_2 + liquifierRewards * tgTokenOut_2 / (tgTokenOut_1 + tgTokenOut_2),
             "balance 2 incorrect"
         );
     }

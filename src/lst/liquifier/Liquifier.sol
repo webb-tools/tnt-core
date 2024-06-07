@@ -8,7 +8,7 @@ import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
 
 import { Adapter, AdapterDelegateCall } from "core/lst/adapters/Adapter.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
-import { TenderizerImmutableArgs, TenderizerEvents } from "core/lst/tenderizer/TenderizerBase.sol";
+import { LiquifierImmutableArgs, LiquifierEvents } from "core/lst/liquifier/LiquifierBase.sol";
 import { TgToken } from "core/lst/tendertoken/TgToken.sol";
 import { Multicall } from "core/lst/utils/Multicall.sol";
 import { SelfPermit } from "core/lst/utils/SelfPermit.sol";
@@ -16,12 +16,12 @@ import { _staticcall } from "core/lst/utils/StaticCall.sol";
 import { addressToString } from "core/lst/utils/Utils.sol";
 
 /**
- * @title Tenderizer
- * @author Tenderize Labs Ltd
+ * @title Liquifier
+ * @author Liquifie Labs Ltd
  * @notice Liquid staking vault for native liquid staking
  * @dev Uses full type safety and unstructured storage
  */
-contract Tenderizer is TenderizerImmutableArgs, TenderizerEvents, TgToken, Multicall, SelfPermit {
+contract Liquifier is LiquifierImmutableArgs, LiquifierEvents, TgToken, Multicall, SelfPermit {
     error InsufficientAssets();
 
     using AdapterDelegateCall for Adapter;
@@ -32,7 +32,7 @@ contract Tenderizer is TenderizerImmutableArgs, TenderizerEvents, TgToken, Multi
     uint256 private constant FEE_BASE = 1e6;
 
     // solhint-disable-next-line no-empty-blocks
-    constructor(address _registry, address _unlocks) TenderizerImmutableArgs(_registry, _unlocks) { }
+    constructor(address _registry, address _unlocks) LiquifierImmutableArgs(_registry, _unlocks) { }
     receive() external payable { }
     fallback() external payable { }
 

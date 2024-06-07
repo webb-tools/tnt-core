@@ -6,24 +6,24 @@ pragma solidity >=0.8.19;
 
 import { ERC1967Proxy } from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import { Tenderizer } from "core/lst/tenderizer/Tenderizer.sol";
+import { Liquifier } from "core/lst/liquifier/Liquifier.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 import { FACTORY_ROLE } from "core/lst/registry/Roles.sol";
 import { Renderer } from "core/lst/unlocks/Renderer.sol";
 import { Unlocks } from "core/lst/unlocks/Unlocks.sol";
 import { Factory } from "core/lst/factory/Factory.sol";
 
-struct TenderizerFixture {
+struct LiquifierFixture {
     Registry registry_impl;
     Registry registry;
     Renderer renderer_impl;
     Renderer renderer;
     Unlocks unlocks;
-    Tenderizer tenderizer;
+    Liquifier liquifier;
     Factory factory;
 }
 
-function tenderizerFixture() returns (TenderizerFixture memory) {
+function liquifierFixture() returns (LiquifierFixture memory) {
     bytes32 salt = bytes32(uint256(1));
 
     Registry registry = new Registry{ salt: salt }();
@@ -33,21 +33,21 @@ function tenderizerFixture() returns (TenderizerFixture memory) {
     ERC1967Proxy rendererProxy = new ERC1967Proxy{ salt: salt }(address(renderer), abi.encodeCall(renderer.initialize, ()));
     Unlocks unlocks = new Unlocks{ salt: salt }(address(registryProxy), address(rendererProxy));
 
-    Tenderizer tenderizer = new Tenderizer{ salt: salt }(registryProxy, address(unlocks));
+    Liquifier liquifier = new Liquifier{ salt: salt }(registryProxy, address(unlocks));
 
-    Registry(registryProxy).initialize(address(tenderizer), address(unlocks));
+    Registry(registryProxy).initialize(address(liquifier), address(unlocks));
 
     Factory factory = new Factory{ salt: salt }(address(registryProxy));
 
     Registry(registryProxy).grantRole(FACTORY_ROLE, address(factory));
 
-    return TenderizerFixture({
+    return LiquifierFixture({
         registry_impl: registry,
         registry: Registry(registryProxy),
         renderer_impl: renderer,
         renderer: Renderer(address(rendererProxy)),
         unlocks: unlocks,
-        tenderizer: tenderizer,
+        liquifier: liquifier,
         factory: factory
     });
 }

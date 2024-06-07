@@ -8,7 +8,7 @@ import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { Adapter } from "core/lst/adapters/Adapter.sol";
 import { IERC165 } from "core/lst/interfaces/IERC165.sol";
-import { ITenderizer } from "core/lst/tenderizer/ITenderizer.sol";
+import { ILiquifier } from "core/lst/liquifier/ILiquifier.sol";
 import {
     IPolygonStakeManager,
     IPolygonValidatorShares,
@@ -27,7 +27,7 @@ ERC20 constant POL = ERC20(address(0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0));
 // Old validator owners
 // If validators changed their "owner" we must have a special case to fetch the
 // correct validator shares contract for their new owner.
-// This fixes issue where tenderizers are currently tied to "owner" instead of "validatorId"
+// This fixes issue where liquifiers are currently tied to "owner" instead of "validatorId"
 address constant BOUNTYBLOK_OLD = 0x055BD801cA712b4ddf67db8BC23FB6C8510D52b9;
 address constant BOUNTYBLOK_NEW = 0x1BE946281214Afa0200725917B46EaeCb4b7dBE1;
 
@@ -49,7 +49,7 @@ contract PolygonAdapter is Adapter {
         uint256 validatorId;
     }
 
-    uint256 private constant STORAGE = uint256(keccak256("xyz.tenderize.polygon.adapter.storage.location")) - 1;
+    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifie.polygon.adapter.storage.location")) - 1;
 
     function _loadStorage() internal pure returns (Storage storage $) {
         uint256 slot = STORAGE;
@@ -85,7 +85,7 @@ contract PolygonAdapter is Adapter {
     }
 
     function previewWithdraw(uint256 unlockID) external view returns (uint256 amount) {
-        // get validator for caller (Tenderizer through delegate call)
+        // get validator for caller (Liquifier through delegate call)
         address validator = _getValidatorAddress();
         // get the validator shares contract for validator
         uint256 validatorId = getValidatorId(validator);
@@ -191,7 +191,7 @@ contract PolygonAdapter is Adapter {
     function _getValidatorAddress() internal view returns (address) {
         Storage storage $ = _loadStorage();
         uint256 id = $.validatorId;
-        return id != 0 ? IPolygonStakingNFT(address(POLYGON_STAKEMANAGER)).ownerOf(id) : ITenderizer(address(this)).validator();
+        return id != 0 ? IPolygonStakingNFT(address(POLYGON_STAKEMANAGER)).ownerOf(id) : ILiquifier(address(this)).validator();
     }
 
     function getValidatorId(address validator) public view returns (uint256) {

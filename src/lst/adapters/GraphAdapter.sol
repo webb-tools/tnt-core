@@ -18,7 +18,7 @@ uint256 constant MAX_PPM = 1e6;
 contract GraphAdapter is Adapter {
     using SafeTransferLib for ERC20;
 
-    uint256 private constant STORAGE = uint256(keccak256("xyz.tenderize.graph.adapter.storage.location")) - 1;
+    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifie.graph.adapter.storage.location")) - 1;
 
     error WithdrawPending();
 

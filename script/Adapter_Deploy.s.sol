@@ -33,15 +33,15 @@ contract Adapter_Deploy is Script {
         // On local testing node, the token addresses will be different than mainnet
         // So do not compare token addresses
         // check which adapter to deploy
-        // if (asset == address(LPT)) {
-        //     adapter = address(new LivepeerAdapter{ salt: bytes32(LPT_VERSION) }());
-        // } else if (asset == address(GRT)) {
-        //     adapter = address(new GraphAdapter{ salt: bytes32(GRT_VERSION) }());
-        // } else if (asset == address(POL)) {
-        //     adapter = address(new PolygonAdapter{ salt: bytes32(POL_VERSION) }());
-        // } else {
-        //     revert("Adapter not supported");
-        // }
+        if (asset == address(LPT)) {
+            adapter = address(new LivepeerAdapter{ salt: bytes32(LPT_VERSION) }());
+        } else if (asset == address(GRT)) {
+            adapter = address(new GraphAdapter{ salt: bytes32(GRT_VERSION) }());
+        } else if (asset == address(POL)) {
+            adapter = address(new PolygonAdapter{ salt: bytes32(POL_VERSION) }());
+        } else {
+            revert("Adapter not supported");
+        }
 
         // register adapter
         registry.registerAdapter(asset, adapter);

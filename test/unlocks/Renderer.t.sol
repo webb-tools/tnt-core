@@ -55,7 +55,7 @@ contract RendererTest is Test {
     ERC1967Proxy private proxy;
     address private owner = vm.addr(1);
     address private nonAuthorized = vm.addr(2);
-    address private tenderizer = vm.addr(3);
+    address private liquifier = vm.addr(3);
     address private validator = vm.addr(4);
     uint256 private id = 1;
     Metadata private metadata =
@@ -90,7 +90,7 @@ contract RendererTest is Test {
         assertEq(
             string(Base64.decode(encodedJson)),
             // solhint-disable-next-line max-line-length
-            '{"name": "TenderLock", "description": "TenderLock from https://tenderize.me represents ERC20 tokens during the unbonding period, thus making them tradable. Owning a TenderLock token makes the owner eligible to claim the tokens at the end of the unbonding period.", "image": "data:image/svg+xml;base64,<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink=\'http://www.w3.org/1999/xlink\'>PHJlY3Qgd2lkdGg9JzI5MHB4JyBoZWlnaHQ9JzUwMHB4JyBmaWxsPScjMDAwMDAwJy8+PHRleHQgeD0nMTAnIHk9JzIwJz5HUlQ8L3RleHQ+PHRleHQgeD0iMTAiIHk9IjQwIj4xMDA8L3RleHQ+PHRleHQgeD0iMTAiIHk9IjYwIj4xMDAwPC90ZXh0Pjx0ZXh0IHg9IjEwIiB5PSI4MCI+MTwvdGV4dD48L3N2Zz4=","attributes":[{"trait_type": "maturity", "value":1000},{"trait_type": "amount", "value":100},{"trait_type": "token", "value":"Graph"},{"trait_type": "symbol", "value":"GRT"}]}'
+            '{"name": "TenderLock", "description": "TenderLock from https://liquifie.me represents ERC20 tokens during the unbonding period, thus making them tradable. Owning a TenderLock token makes the owner eligible to claim the tokens at the end of the unbonding period.", "image": "data:image/svg+xml;base64,<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink=\'http://www.w3.org/1999/xlink\'>PHJlY3Qgd2lkdGg9JzI5MHB4JyBoZWlnaHQ9JzUwMHB4JyBmaWxsPScjMDAwMDAwJy8+PHRleHQgeD0nMTAnIHk9JzIwJz5HUlQ8L3RleHQ+PHRleHQgeD0iMTAiIHk9IjQwIj4xMDA8L3RleHQ+PHRleHQgeD0iMTAiIHk9IjYwIj4xMDAwPC90ZXh0Pjx0ZXh0IHg9IjEwIiB5PSI4MCI+MTwvdGV4dD48L3N2Zz4=","attributes":[{"trait_type": "maturity", "value":1000},{"trait_type": "amount", "value":100},{"trait_type": "token", "value":"Graph"},{"trait_type": "symbol", "value":"GRT"}]}'
         );
     }
 

@@ -4,7 +4,7 @@ import { ERC721 } from "solmate/tokens/ERC721.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 
 import { Adapter } from "core/lst/adapters/Adapter.sol";
-import { Tenderizer } from "core/lst/tenderizer/Tenderizer.sol";
+import { Liquifier } from "core/lst/liquifier/Liquifier.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 import { Renderer } from "core/lst/unlocks/Renderer.sol";
 
@@ -33,11 +33,11 @@ contract Unlocks is ERC721 {
     Renderer private immutable renderer;
 
     error NotOwnerOf(uint256 tokenId, address owner, address sender);
-    error NotTenderizer(address sender);
+    error NotLiquifier(address sender);
     error InvalidID();
 
-    modifier isValidTenderizer(address sender) {
-        _isValidTenderizer(sender);
+    modifier isValidLiquifier(address sender) {
+        _isValidLiquifier(sender);
         _;
     }
 
@@ -48,7 +48,7 @@ contract Unlocks is ERC721 {
 
     /**
      * @notice Creates a new unlock token
-     * @dev Only callable by a Tenderizer
+     * @dev Only callable by a Liquifier
      * @param receiver Address of the receiver
      * @param unlockId ID of the unlock
      * @return tokenId ID of the created token
@@ -59,7 +59,7 @@ contract Unlocks is ERC721 {
     )
         external
         virtual
-        isValidTenderizer(msg.sender)
+        isValidLiquifier(msg.sender)
         returns (uint256 tokenId)
     {
         if (unlockId >= 1 << 96) revert InvalidID();
@@ -69,11 +69,11 @@ contract Unlocks is ERC721 {
 
     /**
      * @notice Burns an unlock token
-     * @dev Only callable by a Tenderizer
+     * @dev Only callable by a Liquifier
      * @param owner Owner of the token
      * @param unlockId ID of the unlock
      */
-    function useUnlock(address owner, uint256 unlockId) external virtual isValidTenderizer(msg.sender) {
+    function useUnlock(address owner, uint256 unlockId) external virtual isValidLiquifier(msg.sender) {
         if (unlockId >= 1 << 96) revert InvalidID();
         uint256 tokenId = _encodeTokenId(msg.sender, uint96(unlockId));
         if (ownerOf(tokenId) != owner) revert NotOwnerOf(unlockId, ownerOf(tokenId), owner);
@@ -96,15 +96,15 @@ contract Unlocks is ERC721 {
      * @return metadata of the unlock token
      */
     function getMetadata(uint256 tokenId) external view returns (Metadata memory metadata) {
-        (address payable tenderizer, uint96 unlockId) = _decodeTokenId(tokenId);
-        address asset = Tenderizer(tenderizer).asset();
+        (address payable liquifier, uint96 unlockId) = _decodeTokenId(tokenId);
+        address asset = Liquifier(liquifier).asset();
 
-        Adapter adapter = Tenderizer(tenderizer).adapter();
-        uint256 maturity = Tenderizer(tenderizer).unlockMaturity(unlockId);
+        Adapter adapter = Liquifier(liquifier).adapter();
+        uint256 maturity = Liquifier(liquifier).unlockMaturity(unlockId);
         uint256 currentTime = adapter.currentTime();
 
         return Metadata({
-            amount: Tenderizer(tenderizer).previewWithdraw(unlockId),
+            amount: Liquifier(liquifier).previewWithdraw(unlockId),
             maturity: maturity,
             progress: maturity > currentTime
                 ? 100 - FixedPointMathLib.mulDivUp((maturity - currentTime), 100, adapter.unlockTime())
@@ -112,20 +112,20 @@ contract Unlocks is ERC721 {
             unlockId: unlockId,
             symbol: ERC20(asset).symbol(),
             name: ERC20(asset).name(),
-            validator: Tenderizer(tenderizer).validator()
+            validator: Liquifier(liquifier).validator()
         });
     }
 
-    function _isValidTenderizer(address sender) internal view virtual {
-        if (!registry.isTenderizer(sender)) revert NotTenderizer(sender);
+    function _isValidLiquifier(address sender) internal view virtual {
+        if (!registry.isLiquifier(sender)) revert NotLiquifier(sender);
     }
 
-    function _encodeTokenId(address tenderizer, uint96 unlockId) internal pure virtual returns (uint256) {
-        return uint256(bytes32(abi.encodePacked(tenderizer, unlockId)));
+    function _encodeTokenId(address liquifier, uint96 unlockId) internal pure virtual returns (uint256) {
+        return uint256(bytes32(abi.encodePacked(liquifier, unlockId)));
     }
 
-    function _decodeTokenId(uint256 tokenId) internal pure virtual returns (address payable tenderizer, uint96 unlockId) {
+    function _decodeTokenId(uint256 tokenId) internal pure virtual returns (address payable liquifier, uint96 unlockId) {
         bytes32 a = bytes32(tokenId);
-        (tenderizer, unlockId) = (payable(address(bytes20(a))), uint96(bytes12(a << 160)));
+        (liquifier, unlockId) = (payable(address(bytes20(a))), uint96(bytes12(a << 160)));
     }
 }
