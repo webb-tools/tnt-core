@@ -10,6 +10,8 @@ The Liquifier protocol enables **liquid native staking**, each validator on a ne
 liquid staking vault and ERC20 token for itself and its delegators. It is designed to be fully credibly neutral and
 autonomous, while enabling more flexibility to users when staking.
 
+Based off of [https://github.com/Tenderize/staking](Tenderize)
+
 ## Getting Started
 
 ## Usage
