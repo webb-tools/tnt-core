@@ -41,9 +41,9 @@ contract Renderer is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 "data:application/json;base64,",
                 Base64.encode(
                     abi.encodePacked(
-                        '{"name": "TenderLock',
+                        '{"name": "TangleLock',
                         // solhint-disable-next-line max-line-length
-                        '", "description": "TenderLock from https://liquifie.me represents ERC20 tokens during the unbonding period, thus making them tradable. Owning a TenderLock token makes the owner eligible to claim the tokens at the end of the unbonding period.", "image": "data:image/svg+xml;base64,',
+                        '", "description": "TangleLock from https://tangle.tools represents ERC20 tokens during the unbonding period, thus making them tradable. Owning a TangleLock token makes the owner eligible to claim the tokens at the end of the unbonding period.", "image": "data:image/svg+xml;base64,',
                         svg(data),
                         '",',
                         '"attributes":[',

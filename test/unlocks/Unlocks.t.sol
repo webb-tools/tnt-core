@@ -29,7 +29,7 @@ contract UnlockTest is Test {
     }
 
     function test_Metadata() public {
-        assertEq(unlocks.name(), "TenderUnlocks");
+        assertEq(unlocks.name(), "TangleUnlocks");
         assertEq(unlocks.symbol(), "UNLOCK");
     }
 

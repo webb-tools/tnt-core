@@ -141,7 +141,7 @@ Liquifiers are deployes as lightweight clones (proxies) with immutable argumants
 gas. Immutable arguments are appended to the clone's bytecode at creation time, and appended to the calldata on a
 delegatecall to the proxy. The implementation can then read and deserialize these arguments from the calldata.
 
-#### TenderToken
+#### LiquidToken
 
 `Liquifier` inherits the `TGToken` contract, which is a rebasing ERC20 token. Its supply always equals the amount staked
 in the underlying protocol for a validator and its delegators. Rebasing changes the total supply depending on whether

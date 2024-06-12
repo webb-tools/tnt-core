@@ -5,7 +5,7 @@ pragma solidity >=0.8.19;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 import { IERC20 } from "core/lst/interfaces/IERC20.sol";
-import { TgTokenStorage } from "core/lst/tendertoken/TgTokenStorage.sol";
+import { TgTokenStorage } from "core/lst/liquidtoken/TgTokenStorage.sol";
 
 /// @notice Non-standard ERC20 + EIP-2612 implementation.
 /// @author Liquifie

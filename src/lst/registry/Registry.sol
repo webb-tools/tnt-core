@@ -6,7 +6,7 @@ import { AccessControlUpgradeable } from "openzeppelin-contracts-upgradeable/acc
 import { Initializable } from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { RegistryStorage } from "core/lst/registry/RegistryStorage.sol";
-import { FACTORY_ROLE, FEE_GAUGE_ROLE, TENDERIZER_ROLE, UPGRADE_ROLE, GOVERNANCE_ROLE } from "core/lst/registry/Roles.sol";
+import { FACTORY_ROLE, FEE_GAUGE_ROLE, LIQUIFIER_ROLE, UPGRADE_ROLE, GOVERNANCE_ROLE } from "core/lst/registry/Roles.sol";
 import { IERC165 } from "core/lst/interfaces/IERC165.sol";
 import { Adapter } from "core/lst/adapters/Adapter.sol";
 /**
@@ -95,7 +95,7 @@ contract Registry is Initializable, UUPSUpgradeable, AccessControlUpgradeable, R
      * @return Whether the address is a valid liquifier
      */
     function isLiquifier(address liquifier) external view returns (bool) {
-        return hasRole(TENDERIZER_ROLE, liquifier);
+        return hasRole(LIQUIFIER_ROLE, liquifier);
     }
 
     /**
@@ -136,7 +136,7 @@ contract Registry is Initializable, UUPSUpgradeable, AccessControlUpgradeable, R
             revert LiquifierAlreadyExists(asset, validator, $.liquifiers[asset][validator]);
         }
         $.liquifiers[asset][validator] = liquifier;
-        _grantRole(TENDERIZER_ROLE, liquifier);
+        _grantRole(LIQUIFIER_ROLE, liquifier);
         emit NewLiquifier(asset, validator, liquifier);
     }
 

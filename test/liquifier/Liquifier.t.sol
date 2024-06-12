@@ -10,7 +10,7 @@ import { Adapter, LiquifierHarness } from "test/liquifier/Liquifier.harness.sol"
 import { AdapterDelegateCall } from "core/lst/adapters/Adapter.sol";
 import { LiquifierEvents } from "core/lst/liquifier/LiquifierBase.sol";
 import { StaticCallFailed } from "core/lst/utils/StaticCall.sol";
-import { TgToken } from "core/lst/tendertoken/TgToken.sol";
+import { TgToken } from "core/lst/liquidtoken/TgToken.sol";
 import { Unlocks } from "core/lst/unlocks/Unlocks.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 import { ClonesWithImmutableArgs } from "clones/ClonesWithImmutableArgs.sol";
@@ -63,12 +63,12 @@ contract LiquifierSetup is Test, TestHelpers {
 contract LiquifierTest is LiquifierSetup, LiquifierEvents {
     function test_Name() public {
         vm.expectCall(asset, abi.encodeCall(IERC20Metadata.symbol, ()));
-        assertEq(liquifier.name(), string.concat("tender ", symbol, "-", addressToString(validator)), "invalid name");
+        assertEq(liquifier.name(), string.concat("liquid ", symbol, "-", addressToString(validator)), "invalid name");
     }
 
     function test_Symbol() public {
         vm.expectCall(asset, abi.encodeCall(IERC20Metadata.symbol, ()));
-        assertEq(liquifier.symbol(), string.concat("t", symbol, "-", addressToString(validator)), "invalid name");
+        assertEq(liquifier.symbol(), string.concat("tg", symbol, "-", addressToString(validator)), "invalid name");
     }
 
     function test_InitialVaules() public {
@@ -247,7 +247,7 @@ contract LiquifierTest is LiquifierSetup, LiquifierEvents {
         liquifier.unlock(0);
     }
 
-    function test_Unlock_RevertIfNotEnoughTenderTokens() public {
+    function test_Unlock_RevertIfNotEnoughLiquidTokens() public {
         uint256 depositAmount = 100 ether;
         uint256 unlockAmount = depositAmount + 1;
 

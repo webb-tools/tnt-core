@@ -12,7 +12,7 @@ import { Initializable } from "openzeppelin-contracts-upgradeable/proxy/utils/In
 import { UUPSUpgradeable } from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { UUPSTestHelper } from "test/helpers/UUPSTestHelper.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
-import { FACTORY_ROLE, FEE_GAUGE_ROLE, TENDERIZER_ROLE, UPGRADE_ROLE, GOVERNANCE_ROLE } from "core/lst/registry/Roles.sol";
+import { FACTORY_ROLE, FEE_GAUGE_ROLE, LIQUIFIER_ROLE, UPGRADE_ROLE, GOVERNANCE_ROLE } from "core/lst/registry/Roles.sol";
 import { LivepeerAdapter } from "core/lst/adapters/LivepeerAdapter.sol";
 // solhint-disable quotes
 // solhint-disable func-name-mixedcase
@@ -44,7 +44,7 @@ contract RegistryUpgradeTest is UUPSTestHelper {
         assertEq(Registry(address(proxy)).getRoleAdmin(GOVERNANCE_ROLE), GOVERNANCE_ROLE);
         assertEq(Registry(address(proxy)).getRoleAdmin(FACTORY_ROLE), GOVERNANCE_ROLE);
         assertEq(Registry(address(proxy)).getRoleAdmin(FEE_GAUGE_ROLE), FEE_GAUGE_ROLE);
-        assertEq(Registry(address(proxy)).getRoleAdmin(TENDERIZER_ROLE), Registry(address(proxy)).DEFAULT_ADMIN_ROLE());
+        assertEq(Registry(address(proxy)).getRoleAdmin(LIQUIFIER_ROLE), Registry(address(proxy)).DEFAULT_ADMIN_ROLE());
         assertEq(Registry(address(proxy)).getRoleAdmin(UPGRADE_ROLE), UPGRADE_ROLE);
     }
 
@@ -125,7 +125,7 @@ contract InitializedRegistry is Registry {
         _setRoleAdmin(GOVERNANCE_ROLE, GOVERNANCE_ROLE);
         _setRoleAdmin(FACTORY_ROLE, GOVERNANCE_ROLE);
         _setRoleAdmin(FEE_GAUGE_ROLE, FEE_GAUGE_ROLE);
-        _setRoleAdmin(TENDERIZER_ROLE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(LIQUIFIER_ROLE, DEFAULT_ADMIN_ROLE);
         // Only allow UPGRADE_ROLE to add new UPGRADE_ROLE memebers
         // If all members of UPGRADE_ROLE are revoked, contract upgradability is revoked
         _setRoleAdmin(UPGRADE_ROLE, UPGRADE_ROLE);
@@ -192,7 +192,7 @@ contract RegistryTest is Test {
         vm.expectEmit(true, true, true, true);
         emit NewLiquifier(asset, account, liquifier);
         registry.registerLiquifier(asset, account, liquifier);
-        assertEq(registry.hasRole(TENDERIZER_ROLE, liquifier), true);
+        assertEq(registry.hasRole(LIQUIFIER_ROLE, liquifier), true);
     }
 
     function test_RegisterLiquifier_RevertsIfExists() public {
@@ -201,7 +201,7 @@ contract RegistryTest is Test {
         vm.startPrank(factory);
         registry.registerLiquifier(asset, account, liquifier);
         vm.expectRevert(abi.encodeWithSelector(Registry.LiquifierAlreadyExists.selector, asset, account, liquifier));
-        registry.registerLiquifier(asset, account, makeAddr("SECOND_TENDERIZER"));
+        registry.registerLiquifier(asset, account, makeAddr("SECOND_LIQUIFIER"));
         vm.stopPrank();
     }
 

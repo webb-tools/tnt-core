@@ -5,7 +5,7 @@ pragma solidity >=0.8.19;
 import { Test, stdError } from "forge-std/Test.sol";
 import { TestHelpers } from "test/helpers/Helpers.sol";
 import { IERC20 } from "core/lst/interfaces/IERC20.sol";
-import { TgToken } from "core/lst/tendertoken/TgToken.sol";
+import { TgToken } from "core/lst/liquidtoken/TgToken.sol";
 
 // solhint-disable func-name-mixedcase
 // solhint-disable no-empty-blocks

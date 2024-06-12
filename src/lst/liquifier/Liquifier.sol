@@ -9,7 +9,7 @@ import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
 import { Adapter, AdapterDelegateCall } from "core/lst/adapters/Adapter.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 import { LiquifierImmutableArgs, LiquifierEvents } from "core/lst/liquifier/LiquifierBase.sol";
-import { TgToken } from "core/lst/tendertoken/TgToken.sol";
+import { TgToken } from "core/lst/liquidtoken/TgToken.sol";
 import { Multicall } from "core/lst/utils/Multicall.sol";
 import { SelfPermit } from "core/lst/utils/SelfPermit.sol";
 import { _staticcall } from "core/lst/utils/StaticCall.sol";
@@ -38,12 +38,12 @@ contract Liquifier is LiquifierImmutableArgs, LiquifierEvents, TgToken, Multical
 
     // @inheritdoc TgToken
     function name() external view override returns (string memory) {
-        return string.concat("tender ", _baseSymbol());
+        return string.concat("liquid ", _baseSymbol());
     }
 
     // @inheritdoc TgToken
     function symbol() external view override returns (string memory) {
-        return string.concat("t", _baseSymbol());
+        return string.concat("tg", _baseSymbol());
     }
 
     // @inheritdoc TgToken

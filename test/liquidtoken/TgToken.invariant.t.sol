@@ -12,7 +12,7 @@ import { console2 } from "forge-std/console2.sol";
 import { SafeMath } from "openzeppelin-contracts/utils/math/SafeMath.sol";
 
 import { Test } from "forge-std/Test.sol";
-import { TgToken } from "core/lst/tendertoken/TgToken.sol";
+import { TgToken } from "core/lst/liquidtoken/TgToken.sol";
 import { TestHelpers, AddressSet, LibAddressSet } from "test/helpers/Helpers.sol";
 
 contract TestTgToken is TgToken {
