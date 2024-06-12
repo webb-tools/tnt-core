@@ -17,7 +17,7 @@ import { addressToString } from "core/lst/utils/Utils.sol";
 
 /**
  * @title Liquifier
- * @author Liquifie Labs Ltd
+ * @author Tangle Labs
  * @notice Liquid staking vault for native liquid staking
  * @dev Uses full type safety and unstructured storage
  */

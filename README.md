@@ -4,9 +4,9 @@ This repo contains interfaces and abstractions for using Tangle's restaking infr
 service blueprints. The service blueprint is a set of smart contracts that define the rules of the service and allow the gadget developer to customize the service to their needs, how it is used, how it is paid for, and how it is managed.
 
 
-## Liquifie - Liquid Native Staking
+## Liquifier - Liquid Native Staking
 
-The Liquifie protocol enables **liquid native staking**, each validator on a network can have its own permissionless
+The Liquifier protocol enables **liquid native staking**, each validator on a network can have its own permissionless
 liquid staking vault and ERC20 token for itself and its delegators. It is designed to be fully credibly neutral and
 autonomous, while enabling more flexibility to users when staking.
 
@@ -111,7 +111,7 @@ forge test
 
 ### ERC1967 Storage
 
-Liquifie contracts use [ERC1967](https://eips.ethereum.org/EIPS/eip-1967) storage slots. Each contract has its own
+Liquifier contracts use [ERC1967](https://eips.ethereum.org/EIPS/eip-1967) storage slots. Each contract has its own
 storage space defined as a `struct` stored at a defined location to avoid storage collisions. Storage slots are
 addressed with a dollar sign, `$`, to improve readability when storage is accessed.
 

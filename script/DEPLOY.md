@@ -1,4 +1,4 @@
-# Liquifie Deployments
+# Liquifier Deployments
 
 ## Deploying To Anvil
 

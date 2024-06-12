@@ -226,7 +226,7 @@ contract LivepeerForkTest is Test, LiquifierEvents, ERC721Receiver {
             assertEq(amount, 0, "unstake amount zero");
             assertEq(withdrawRound, 0, "withdraw round zero");
         }
-        // Check Liquifie Unlock is deleted
+        // Check Liquifier Unlock is deleted
         vm.expectRevert("NOT_MINTED");
         fixture.unlocks.ownerOf(tokenId);
         // Check LPT balance

@@ -11,7 +11,7 @@ import { IERC165 } from "core/lst/interfaces/IERC165.sol";
 import { Adapter } from "core/lst/adapters/Adapter.sol";
 /**
  * @title Registry
- * @author Liquifie Labs Ltd
+ * @author Tangle Labs
  * @notice Registry for Liquifier ecosystem. Role-based access, fee management and adapter updates.
  */
 

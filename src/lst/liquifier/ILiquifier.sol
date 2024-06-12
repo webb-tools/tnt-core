@@ -7,7 +7,7 @@ import { Liquifier } from "core/lst/liquifier/Liquifier.sol";
 
 /**
  * @title ILiquifier
- * @author Liquifie Labs Ltd
+ * @author Tangle Labs
  * @notice This interface can be used by external sources to interfact with a Liquifier.
  * @dev Contains only the necessary API
  */

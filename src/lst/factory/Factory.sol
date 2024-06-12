@@ -10,7 +10,7 @@ import { Liquifier } from "core/lst/liquifier/Liquifier.sol";
 
 /**
  * @title Factory
- * @author Liquifie Labs Ltd
+ * @author Tangle Labs
  * @notice Factory for Liquifier contracts
  */
 contract Factory {
