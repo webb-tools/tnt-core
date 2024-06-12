@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "../ServiceManager.sol";
+import "core/ServiceManager.sol";
 
 //
 contract DfnsCggmp21ThresholdSignatureService is ServiceManagerBase, PermittedCaller {
