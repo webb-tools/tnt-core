@@ -37,7 +37,7 @@ contract XYZ_Deploy is Script {
         // mint supply
         XYZ.mint(me, totalSupply);
         StakingXYZ stakingXYZ = new StakingXYZ{ salt: salt }(address(XYZ), unlockTime, baseAPR);
-        console2.log(string.concat(symbol, " Staking :"), address(stakingXYZ));
+        console2.log(string.concat(symbol, " Staking: "), address(stakingXYZ));
         XYZAdapter adapter = new XYZAdapter{ salt: salt }(address(stakingXYZ), address(XYZ));
         console2.log(string.concat(symbol, " Adapter: "), address(adapter));
         // Register XYZ adapter

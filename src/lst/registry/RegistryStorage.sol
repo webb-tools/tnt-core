@@ -3,7 +3,7 @@
 pragma solidity >=0.8.19;
 
 contract RegistryStorage {
-    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifie.registry.storage.location")) - 1;
+    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifier.registry.storage.location")) - 1;
 
     struct Protocol {
         address adapter;

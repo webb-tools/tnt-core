@@ -31,7 +31,7 @@ contract LivepeerAdapter is Adapter {
         uint256 lastRebaseRound;
     }
 
-    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifie.livepeer.adapter.storage.location")) - 1;
+    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifier.livepeer.adapter.storage.location")) - 1;
 
     function _loadStorage() internal pure returns (Storage storage $) {
         uint256 slot = STORAGE;

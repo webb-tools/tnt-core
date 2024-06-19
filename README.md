@@ -54,6 +54,31 @@ forge coverage
 
 For full deploy flow check out the [deploy document](./script/DEPLOY.md).
 
+#### Deploy Liquid Staking and deposit LPT tokens 
+
+The `deploy_liquid_staking.sh` script is used to automate the deployment of the Liquifier protocol components to a local Anvil instance. This script simplifies the deployment process by setting up the necessary environment variables and executing the required deployment commands.
+
+#### Usage
+
+To use the `deploy_liquid_staking.sh` script, follow these steps:
+
+1. **Start Anvil**: Open a terminal and start Anvil by running:
+    ```sh
+    anvil
+    ```
+   Leave this terminal open and let `anvil` run.
+
+2. **Run the Script**: In a separate terminal, navigate to the directory containing the `deploy_liquid_staking.sh` script and execute it:
+    ```sh
+    ./script/deploy_liquid_staking.sh
+    ```
+
+The `deploy_liquid_staking.sh` script performs the following steps:
+
+- **Deploy Registry and Factories**: Deploys the registry and factory contracts to the Anvil instance.
+- **Deploy the LPT Token**: Sets the token parameters and deploys the token contract.
+- **Liquid Stake the Tokens**: Deposits teh LPT tokens into the Liquifier contract, which returns tgLPT tokens 
+
 Deploy Liquifier to Anvil:
 
 ```sh
