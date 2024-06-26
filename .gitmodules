@@ -26,9 +26,10 @@
 	path = lib/openzeppelin-contracts-upgradeable
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
 	branch = v4.9.6
-[submodule "lib/staking-v0.1"]
-	path = lib/staking-v0.1
-	url = https://github.com/smartcontractkit/staking-v0.1
 [submodule "lib/chainlink"]
 	path = lib/chainlink
 	url = https://github.com/smartcontractkit/chainlink
+	branch = contracts-release/0.4.2
+[submodule "lib/staking-v0.1"]
+	path = lib/staking-v0.1
+	url = https://github.com/webb-tools/staking-v0.1
