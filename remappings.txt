@@ -9,5 +9,5 @@ clones/=lib/clones-with-immutable-args/src/
 @uniswap/v3-core=lib/uniswap-v3-core/contracts/
 test/=test/
 chainlink-staking/=lib/staking-v0.1/contracts/
-@chainlink/contracts/src/v0.8/=lib/chainlink/contracts/src/v0.8/
+@chainlink/contracts/=lib/chainlink/contracts/
 @openzeppelin/=lib/openzeppelin-contracts/

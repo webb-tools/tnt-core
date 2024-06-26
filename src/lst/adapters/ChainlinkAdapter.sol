@@ -40,7 +40,7 @@ contract ChainlinkAdapter is Adapter {
         return assets;
     }
 
-    function previewWithdraw(uint256) external pure returns (uint256 amount) {
+    function previewWithdraw(uint256) external view returns (uint256 amount) {
         // In Chainlink, we don't have individual unlock IDs. 
         // Instead, we'll return the total staked amount.
         return CHAINLINK_STAKING.getStake(address(this));

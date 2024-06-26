@@ -11,10 +11,6 @@ fs_permissions = [{ access = "read-write", path = "./" }]
 solc = "0.8.19"
 src = "src"
 
-[profile.default.overrides]
-solc = "0.8.16"
-src = "lib/staking-v0.1"
-
 
 [profile.ci]
 verbosity = 4
