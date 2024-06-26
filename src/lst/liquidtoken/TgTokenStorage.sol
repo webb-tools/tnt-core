@@ -3,7 +3,7 @@
 pragma solidity >=0.8.19;
 
 abstract contract TgTokenStorage {
-    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifie.tgToken.storage.location")) - 1;
+    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifier.tgToken.storage.location")) - 1;
 
     struct Storage {
         uint256 _totalShares;

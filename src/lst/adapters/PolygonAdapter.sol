@@ -49,7 +49,7 @@ contract PolygonAdapter is Adapter {
         uint256 validatorId;
     }
 
-    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifie.polygon.adapter.storage.location")) - 1;
+    uint256 private constant STORAGE = uint256(keccak256("xyz.liquifier.polygon.adapter.storage.location")) - 1;
 
     function _loadStorage() internal pure returns (Storage storage $) {
         uint256 slot = STORAGE;
