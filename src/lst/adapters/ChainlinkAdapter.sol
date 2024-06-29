@@ -55,8 +55,11 @@ contract ChainlinkAdapter is Adapter {
 
     function unlockTime() external view override returns (uint256) {
         // Return the time left until the end of the staking period
-        (, uint256 endTimestamp) = CHAINLINK_STAKING.getRewardTimestamps();
-        return endTimestamp > block.timestamp ? endTimestamp - block.timestamp : 0;
+        // (, uint256 endTimestamp) = CHAINLINK_STAKING.getRewardTimestamps();
+        // return endTimestamp > block.timestamp ? endTimestamp - block.timestamp : 0;
+
+        // You can withdraw your stake at any time.
+        return block.timestamp;
     }
 
     function currentTime() external view override returns (uint256) {
@@ -64,8 +67,12 @@ contract ChainlinkAdapter is Adapter {
     }
 
     function stake(address validator, uint256 amount) public returns (uint256) {
+        // Ignore the validator entirely
+        // First, transfer the LINK tokens to this contract.
+        LINK.transferFrom(msg.sender, address(this), amount);
+        // Then transfer from this contract to the staking contract.
         LINK.safeApprove(address(CHAINLINK_STAKING), amount);
-        CHAINLINK_STAKING.onTokenTransfer(address(this), amount, "");
+        LINK.transfer(address(CHAINLINK_STAKING), amount);
         return amount;
     }
 
