@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.8.15;
+pragma solidity >=0.8.19;
 
-import "./IVault.sol";
+import "core/lst/interfaces/IVault.sol";
 
 interface IOperatorVault is IVault {
     function getPendingRewards() external view returns (uint256);

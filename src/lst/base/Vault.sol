@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.8.15;
+pragma solidity ^0.8.2;
 
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-// Temp duplicate
+// Temp duplicate file instead of using chainlink
 import "core/lst/interfaces/IERC677.sol";
-import "lib/chainlink/contracts/src/v0.4/interfaces/ERC677.sol";
+// import "lib/chainlink/contracts/src/v0.4/interfaces/ERC677.sol";
 import "core/lst/interfaces/IStaking.sol";
 import "core/lst/interfaces/IStakingRewards.sol";
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.8.15;
+pragma solidity >=0.8.19;
 
-import "./IStakingRewardsPool.sol";
+import "core/lst/interfaces/IStakingRewardsPool.sol";
 
 interface IStakingPool is IStakingRewardsPool {
     function deposit(address _account, uint256 _amount) external;

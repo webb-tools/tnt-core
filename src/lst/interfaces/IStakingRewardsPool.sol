@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.8.15;
+pragma solidity >=0.8.19;
 
 import "core/lst/interfaces/IERC677.sol";
 

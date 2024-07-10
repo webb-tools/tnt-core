@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.8.15;
+pragma solidity >=0.8.19;
 
 import "openzeppelin-contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "openzeppelin-contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "core/lst/interfaces/IERC677.sol";
 import "core/lst/base/Strategy.sol";
-import "../interfaces/IVault.sol";
-import "../interfaces/IStaking.sol";
+import "core/lst/interfaces/IVault.sol";
+import "core/lst/interfaces/IStaking.sol";
 
 /**
  * @title Vault Controller Strategy
