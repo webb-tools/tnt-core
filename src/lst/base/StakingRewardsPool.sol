@@ -4,9 +4,8 @@ pragma solidity >=0.8.19;
 import "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-// import "../tokens/base/ERC677Upgradeable.sol";
-import "openzeppelin-contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol";
-
+import "core/lst/base/ERC677Upgradeable.sol";
+// import "openzeppelin-contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol";
 
 /**
  * @title StakingRewardsPool
