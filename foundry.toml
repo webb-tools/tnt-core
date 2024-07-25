@@ -36,3 +36,6 @@ depth = 100
 arbitrum_goerli = "${ARBITRUM_GOERLI_RPC}"
 arbitrum = "${ARBITRUM_RPC}"
 mainnet = "${MAINNET_RPC}"
+
+# [etherscan]
+unknown_chain = { key = "${TENDERLY_VIRTUAL_TESTNET_RPC}", chain = 1, url = "${TENDERLY_VERIFIER_URL}" }

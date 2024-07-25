@@ -19,7 +19,7 @@ contract XYZ_Liquifier is Script {
         address validatorAddress = vm.addr(5);
 
         address newLiquifier = factory.newLiquifier(tokenAddress, validatorAddress);
-        console2.log("LPT Liquifier Address: ", newLiquifier);
+        console2.log("Token Liquifier Address: ", newLiquifier);
 
         vm.stopBroadcast();
     }
