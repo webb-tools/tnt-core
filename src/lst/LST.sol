@@ -7,13 +7,11 @@ import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 contract LST is ERC20 {
     IERC20 public token;
 
-    constructor(address _token)
-        ERC20("Liquid Staking Token", "LST")
-    {
+    constructor(address _token) ERC20("Liquid Staking Token", "LST") {
         token = IERC20(_token);
     }
 
-    function deposit(uint _amount) public {
+    function deposit(uint256 _amount) public {
         // Amount must be greater than zero
         require(_amount > 0, "amount cannot be 0");
 
@@ -24,7 +22,7 @@ contract LST is ERC20 {
         _mint(msg.sender, _amount);
     }
 
-    function withdraw(uint _amount) public {
+    function withdraw(uint256 _amount) public {
         // Burn LST from sender
         _burn(msg.sender, _amount);
 

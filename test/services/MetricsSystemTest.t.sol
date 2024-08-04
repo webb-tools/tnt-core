@@ -2,163 +2,144 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "core/services/MetricsRegistry.sol";
-import "core/services/ServiceConfiguration.sol";
-import "core/services/MetricsAggregator.sol";
+import "core/services/MetricsSystem.sol";
+import "core/services/metrics/IMetricComputation.sol";
+
+contract MockComputation is IMetricComputation {
+    function compute(uint256[] memory values, uint256[] memory) external pure override returns (uint256) {
+        require(values.length > 0, "No values provided");
+        uint256 sum = 0;
+        uint256 count = 0;
+        for (uint256 i = 0; i < values.length; i++) {
+            if (values[i] != 0) {
+                sum += values[i];
+                count++;
+            }
+        }
+        return count > 0 ? sum / count : 0;
+    }
+}
 
 contract MetricsSystemTest is Test {
-    MetricsRegistry public registry;
-    ServiceConfiguration public configuration;
-    MetricsAggregator public aggregator;
+    MetricsSystem public metricsSystem;
+    MockComputation public mockComputation;
 
-    address public blueprintDeveloper = address(1);
-    address public operator1 = address(2);
-    address public operator2 = address(3);
-
-    bytes32 public constant SERVICE_ID = keccak256("TestService");
+    bytes32 public constant BLUEPRINT_ID = keccak256("TestBlueprint");
+    address public constant OPERATOR = address(0x1234);
 
     function setUp() public {
-        vm.startPrank(blueprintDeveloper);
-        
-        registry = new MetricsRegistry();
-        configuration = new ServiceConfiguration(address(registry));
-        aggregator = new MetricsAggregator(address(registry), address(configuration));
-        
-        // Transfer ownership to blueprintDeveloper
-        registry.transferOwnership(blueprintDeveloper);
-        
+        metricsSystem = new MetricsSystem();
+        mockComputation = new MockComputation();
+    }
+
+    function testAddMetric() public {
+        metricsSystem.addMetric(BLUEPRINT_ID, "TestMetric", 2);
+        MetricsSystem.Metric memory metric = metricsSystem.getMetric(BLUEPRINT_ID, 0);
+        assertEq(metric.name, "TestMetric");
+        assertEq(metric.decimals, 2);
+        assertTrue(metric.isActive);
+    }
+
+    function testRemoveMetric() public {
+        metricsSystem.addMetric(BLUEPRINT_ID, "TestMetric", 2);
+        metricsSystem.removeMetric(BLUEPRINT_ID, 0);
+        MetricsSystem.Metric memory metric = metricsSystem.getMetric(BLUEPRINT_ID, 0);
+        assertFalse(metric.isActive);
+    }
+
+    function testAddDerivedMetric() public {
+        uint256[] memory sourceIndices = new uint256[](1);
+        sourceIndices[0] = 0;
+        metricsSystem.addDerivedMetric(BLUEPRINT_ID, "DerivedMetric", sourceIndices, address(mockComputation));
+        MetricsSystem.DerivedMetric memory derivedMetric = metricsSystem.getDerivedMetric(BLUEPRINT_ID, 0);
+        assertEq(derivedMetric.name, "DerivedMetric");
+        assertTrue(derivedMetric.isActive);
+        assertEq(derivedMetric.sourceMetricIndices.length, 1);
+        assertEq(derivedMetric.sourceMetricIndices[0], 0);
+        assertEq(address(derivedMetric.computationContract), address(mockComputation));
+    }
+
+    function testRemoveDerivedMetric() public {
+        uint256[] memory sourceIndices = new uint256[](1);
+        sourceIndices[0] = 0;
+        metricsSystem.addDerivedMetric(BLUEPRINT_ID, "DerivedMetric", sourceIndices, address(mockComputation));
+        metricsSystem.removeDerivedMetric(BLUEPRINT_ID, 0);
+        MetricsSystem.DerivedMetric memory derivedMetric = metricsSystem.getDerivedMetric(BLUEPRINT_ID, 0);
+        assertFalse(derivedMetric.isActive);
+    }
+
+    function testReportMetric() public {
+        metricsSystem.addMetric(BLUEPRINT_ID, "TestMetric", 2);
+        vm.prank(OPERATOR);
+        metricsSystem.reportMetric(BLUEPRINT_ID, 0, 100);
+        MetricsSystem.MetricValue[] memory history = metricsSystem.getOperatorMetricHistory(BLUEPRINT_ID, OPERATOR, 0);
+        assertEq(history.length, 1);
+        assertEq(history[0].value, 100);
+    }
+
+    function testComputeDerivedMetric() public {
+        metricsSystem.addMetric(BLUEPRINT_ID, "TestMetric", 2);
+        uint256[] memory sourceIndices = new uint256[](1);
+        sourceIndices[0] = 0;
+        metricsSystem.addDerivedMetric(BLUEPRINT_ID, "DerivedMetric", sourceIndices, address(mockComputation));
+
+        vm.startPrank(OPERATOR);
+        metricsSystem.reportMetric(BLUEPRINT_ID, 0, 100);
+        metricsSystem.reportMetric(BLUEPRINT_ID, 0, 200);
+        metricsSystem.reportMetric(BLUEPRINT_ID, 0, 300);
         vm.stopPrank();
+
+        metricsSystem.computeDerivedMetric(BLUEPRINT_ID, OPERATOR, 0);
+        MetricsSystem.MetricValue memory derivedValue = metricsSystem.getOperatorDerivedMetric(BLUEPRINT_ID, OPERATOR, 0);
+        assertEq(derivedValue.value, 200); // Average of 100, 200, 300
     }
 
-    function testBlueprintDeveloperSetup() public {
-        vm.startPrank(blueprintDeveloper);
+    function testReportMultipleMetrics() public {
+        metricsSystem.addMetric(BLUEPRINT_ID, "TestMetric1", 2);
+        metricsSystem.addMetric(BLUEPRINT_ID, "TestMetric2", 2);
 
-        // Register metrics
-        registry.registerMetric(SERVICE_ID, "heartbeat", "heartbeat", 60);
-        registry.registerMetric(SERVICE_ID, "taskSuccess", "task", 300);
-        registry.registerMetric(SERVICE_ID, "responseTime", "custom", 60);
-
-        // Set QoS thresholds
-        configuration.setQoSThresholds(SERVICE_ID, 9500, 9800, 100);
-
-        // Initialize metrics
-        aggregator.initializeMetrics(SERVICE_ID);
-
-        vm.stopPrank();
-
-        // Verify metrics registration
-        MetricsRegistry.Metric[] memory metrics = registry.getServiceMetrics(SERVICE_ID);
-        assertEq(metrics.length, 3);
-        assertEq(metrics[0].name, "heartbeat");
-        assertEq(metrics[1].name, "taskSuccess");
-        assertEq(metrics[2].name, "responseTime");
-
-        // Verify QoS thresholds
-        ServiceConfiguration.QoSThresholds memory thresholds = configuration.getQoSThresholds(SERVICE_ID);
-        assertEq(thresholds.minHeartbeatSuccess, 9500);
-        assertEq(thresholds.minTaskSuccess, 9800);
-        assertEq(thresholds.maxResponseTime, 100);
-    }
-
-    function testOperatorReporting() public {
-        // Set up the service first
-        testBlueprintDeveloperSetup();
-
-        vm.startPrank(operator1);
-
-        // Report metrics
-        aggregator.reportMetric(SERVICE_ID, "heartbeat", 1);
-        aggregator.reportMetric(SERVICE_ID, "taskSuccess", 1);
-        aggregator.reportMetric(SERVICE_ID, "responseTime", 50);
-
-        vm.stopPrank();
-
-        // Verify aggregated metrics
-        MetricsAggregator.AggregatedMetrics memory metrics = aggregator.getAggregatedMetrics(SERVICE_ID);
-        assertEq(metrics.heartbeatSuccessRate, 10000);
-        assertEq(metrics.taskSuccessRate, 10000);
-        assertEq(metrics.averageResponseTime, 50);
-    }
-
-    function testMultipleOperatorReporting() public {
-        // Set up the service first
-        testBlueprintDeveloperSetup();
-
-        // Operator 1 reports
-        vm.prank(operator1);
-        aggregator.reportMetric(SERVICE_ID, "heartbeat", 1);
-        aggregator.reportMetric(SERVICE_ID, "taskSuccess", 1);
-        aggregator.reportMetric(SERVICE_ID, "responseTime", 50);
-
-        // Operator 2 reports
-        vm.prank(operator2);
-        aggregator.reportMetric(SERVICE_ID, "heartbeat", 1);
-        aggregator.reportMetric(SERVICE_ID, "taskSuccess", 0);
-        aggregator.reportMetric(SERVICE_ID, "responseTime", 150);
-
-        // Verify aggregated metrics
-        MetricsAggregator.AggregatedMetrics memory metrics = aggregator.getAggregatedMetrics(SERVICE_ID);
-        assertEq(metrics.heartbeatSuccessRate, 10000);
-        assertEq(metrics.taskSuccessRate, 5000);
-        assertEq(metrics.averageResponseTime, 100);
-    }
-
-    function testMovingAverageCalculation() public {
-        // Set up the service first
-        testBlueprintDeveloperSetup();
-
-        vm.startPrank(operator1);
-
-        // Report metrics multiple times
-        for (uint i = 0; i < 10; i++) {
-            aggregator.reportMetric(SERVICE_ID, "heartbeat", 1);
-            aggregator.reportMetric(SERVICE_ID, "taskSuccess", i % 2 == 0 ? 1 : 0);
-            aggregator.reportMetric(SERVICE_ID, "responseTime", 50 + i * 10);
+        vm.startPrank(OPERATOR);
+        for (uint256 i = 0; i < 5; i++) {
+            metricsSystem.reportMetric(BLUEPRINT_ID, 0, 100 + i * 10);
+            metricsSystem.reportMetric(BLUEPRINT_ID, 1, 200 + i * 20);
         }
-
         vm.stopPrank();
 
-        // Verify aggregated metrics
-        MetricsAggregator.AggregatedMetrics memory metrics = aggregator.getAggregatedMetrics(SERVICE_ID);
-        assertEq(metrics.heartbeatSuccessRate, 10000);
-        assertEq(metrics.taskSuccessRate, 5000);
-        assertEq(metrics.averageResponseTime, 95);
+        MetricsSystem.MetricValue[] memory history1 = metricsSystem.getOperatorMetricHistory(BLUEPRINT_ID, OPERATOR, 0);
+        MetricsSystem.MetricValue[] memory history2 = metricsSystem.getOperatorMetricHistory(BLUEPRINT_ID, OPERATOR, 1);
+
+        assertEq(history1.length, 5);
+        assertEq(history2.length, 5);
+        assertEq(history1[4].value, 140);
+        assertEq(history2[4].value, 280);
     }
 
-    function testQoSCheck() public {
-        // Set up the service first
-        testBlueprintDeveloperSetup();
+    function testComputeDerivedMetricWithMultipleSources() public {
+        metricsSystem.addMetric(BLUEPRINT_ID, "TestMetric1", 2);
+        metricsSystem.addMetric(BLUEPRINT_ID, "TestMetric2", 2);
 
-        // Report good metrics
-        vm.prank(operator1);
-        aggregator.reportMetric(SERVICE_ID, "heartbeat", 1);
-        aggregator.reportMetric(SERVICE_ID, "taskSuccess", 1);
-        aggregator.reportMetric(SERVICE_ID, "responseTime", 50);
+        uint256[] memory sourceIndices = new uint256[](2);
+        sourceIndices[0] = 0;
+        sourceIndices[1] = 1;
+        metricsSystem.addDerivedMetric(BLUEPRINT_ID, "DerivedMetric", sourceIndices, address(mockComputation));
 
-        // Check QoS (should pass)
-        bool meetsQoS = aggregator.checkQoS(SERVICE_ID);
-        assertTrue(meetsQoS);
+        vm.startPrank(OPERATOR);
+        metricsSystem.reportMetric(BLUEPRINT_ID, 0, 100);
+        metricsSystem.reportMetric(BLUEPRINT_ID, 1, 200);
+        vm.stopPrank();
 
-        // Report bad metrics
-        vm.prank(operator2);
-        aggregator.reportMetric(SERVICE_ID, "heartbeat", 0);
-        aggregator.reportMetric(SERVICE_ID, "taskSuccess", 0);
-        aggregator.reportMetric(SERVICE_ID, "responseTime", 200);
-
-        // Check QoS again (should fail)
-        meetsQoS = aggregator.checkQoS(SERVICE_ID);
-        assertFalse(meetsQoS);
+        metricsSystem.computeDerivedMetric(BLUEPRINT_ID, OPERATOR, 0);
+        MetricsSystem.MetricValue memory derivedValue = metricsSystem.getOperatorDerivedMetric(BLUEPRINT_ID, OPERATOR, 0);
+        assertEq(derivedValue.value, 150); // Average of 100 and 200
     }
 
-    function testUnauthorizedMetricRegistration() public {
-        vm.prank(operator1);
-        vm.expectRevert("Ownable: caller is not the owner");
-        registry.registerMetric(SERVICE_ID, "unauthorizedMetric", "custom", 60);
+    function testFailReportInvalidMetric() public {
+        vm.expectRevert("Invalid metric");
+        metricsSystem.reportMetric(BLUEPRINT_ID, 0, 100);
     }
 
-    function testReportingUnregisteredMetric() public {
-        vm.prank(operator1);
-        vm.expectRevert("Metric not registered for this service");
-        aggregator.reportMetric(SERVICE_ID, "unregisteredMetric", 1);
+    function testFailComputeInvalidDerivedMetric() public {
+        vm.expectRevert("Invalid derived metric");
+        metricsSystem.computeDerivedMetric(BLUEPRINT_ID, OPERATOR, 0);
     }
 }
