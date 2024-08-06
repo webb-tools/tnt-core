@@ -7,7 +7,7 @@ pragma solidity >=0.8.19;
 import { Script, console2 } from "forge-std/Script.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { StakingXYZ } from "../test/helpers/StakingXYZ.sol";
-import { XYZAdapter} from "../test/helpers/XYZAdapter.sol";
+import { XYZAdapter } from "../test/helpers/XYZAdapter.sol";
 import { Liquifier } from "core/lst/liquifier/Liquifier.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 
