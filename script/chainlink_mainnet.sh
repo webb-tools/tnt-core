@@ -1,19 +1,4 @@
-# echo "
-# unknown_chain = { key = \"${TENDERLY_ACCESS_KEY}\", chain = 1, url = \"https://virtual.mainnet.rpc.tenderly.co/cfe3066a-1c36-4b2b-8af1-e3dd4cf99da9\" }" >> foundry.toml
-
-# forge create Counter \
-# --private-key $PRIVATE_KEY  \
-# --rpc-url https://virtual.mainnet.rpc.tenderly.co/cfe3066a-1c36-4b2b-8af1-e3dd4cf99da9 \
-# --etherscan-api-key $TENDERLY_ACCESS_KEY \
-# --verify \
-# --verifier-url https://virtual.mainnet.rpc.tenderly.co/cfe3066a-1c36-4b2b-8af1-e3dd4cf99da9/verify/etherscan
-
-
 #!/bin/bash
-# set -x
-# nohup bash -c "anvil --chain-id 1337 &" >/dev/null 2>&1 && sleep 5
-
-# !/bin/bash
 
 source .env
 
@@ -74,13 +59,3 @@ echo "Liquifier Address: $LIQUIFIER"
 # Set up environment variables for the next script
 export LIQUIFIER
 
-# # Stake 100 LPT tokens and capture logs
-# liquifier_logs=$(forge script script/XYZ_Stake.s.sol:XYZ_Stake --fork-url http://127.0.0.1:8545 --broadcast --private-key $PRIVATE_KEY -vvvv)
-
-# echo "$liquifier_logs"
-
-# forge verify-contract $LIQUIFIER \
-# Liquifier \
-# --etherscan-api-key $TENDERLY_ACCESS_KEY \
-# --verifier-url $TENDERLY_VERIFIER_URL \
-# --watch

@@ -1,11 +1,5 @@
 # tnt-core
 
-Deployed Contracts on Tenderly:
-- Registry Proxy Address: 0x1C5ffc48077AbdFC8EbbE605Ab011Eb3b218B054
-- Factory Address: 0x25D20120328cc35afe3da930eC1295048CCd9d3b
-- Adapter Address: 0xD60b939004eD587Cc753E6e4C8044af7adBb1a49
-- Liquifier Address: 0x2871DafDB3b0047D06bBdb42f865DeD2514Dd9b0
-
 This repo contains interfaces and abstractions for using Tangle's restaking infrastructure for the creation of new
 service blueprints. The service blueprint is a set of smart contracts that define the rules of the service and allow the gadget developer to customize the service to their needs, how it is used, how it is paid for, and how it is managed.
 
@@ -213,6 +207,44 @@ way.
 
 ![rebase](./diagrams/rebase.png)
 
+
+
+# Deployment of Chainlink adapter
+
+Deployed Contracts on Tenderly:
+- Registry Proxy Address: 0x1C5ffc48077AbdFC8EbbE605Ab011Eb3b218B054
+- Factory Address: 0x25D20120328cc35afe3da930eC1295048CCd9d3b
+- Adapter Address: 0xD60b939004eD587Cc753E6e4C8044af7adBb1a49
+- Liquifier Address: 0x2871DafDB3b0047D06bBdb42f865DeD2514Dd9b0
+- LINK Token Address: 0x514910771AF9Ca656af840dff83E8264EcF986CA
+
+First, configure the .env file with the following fields:
+
+```
+TENDERLY_VIRTUAL_TESTNET_RPC=
+TENDERLY_VERIFIER_URL=$TENDERLY_VIRTUAL_TESTNET_RPC/verify/etherscan
+TENDERLY_ACCESS_KEY=
+```
+
+You can reset the state of the blockchain by running:
+
+```sh
+./script/snapshot_and_revert.sh 
+```
+
+Then you can deploy Chainlink-related contracts:
+
+```sh
+./script/chainlink_mainnet.sh 
+```
+
+This will log all the deployed contract addresses to the terminal.
+
+Finally, you can run a script to start staking LINK:
+
+```sh
+./script/stake_link.sh
+```
 
 
 # Deployment Instructions

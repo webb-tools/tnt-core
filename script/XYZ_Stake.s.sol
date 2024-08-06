@@ -7,7 +7,6 @@ pragma solidity >=0.8.19;
 import { Script, console2 } from "forge-std/Script.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { StakingXYZ } from "../test/helpers/StakingXYZ.sol";
-import { XYZAdapter} from "../test/helpers/XYZAdapter.sol";
 import { Liquifier } from "core/lst/liquifier/Liquifier.sol";
 import { Registry } from "core/lst/registry/Registry.sol";
 
@@ -34,7 +33,7 @@ contract XYZ_Stake is Script {
         console2.log("Initial tgLPT Token balance", liquifier.balanceOf(sender));
 
         // Approve Liquifier contract to spend 1000 LPT tokens
-        uint256 depositAmount = 1000 * (10 ** uint256(token.decimals())); // 1000 LPT tokens
+        uint256 depositAmount = 10 * (10 ** uint256(token.decimals())); // 1000 LPT tokens
         token.approve(address(liquifier), depositAmount);
 
         // Deposit LPT tokens into Liquifier
