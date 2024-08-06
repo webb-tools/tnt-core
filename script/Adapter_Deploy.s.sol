@@ -11,6 +11,7 @@ import { Registry } from "core/lst/registry/Registry.sol";
 import { LivepeerAdapter, LPT, VERSION as LPT_VERSION } from "core/lst/adapters/LivepeerAdapter.sol";
 import { GraphAdapter, GRT, VERSION as GRT_VERSION } from "core/lst/adapters/GraphAdapter.sol";
 import { PolygonAdapter, POL, VERSION as POL_VERSION } from "core/lst/adapters/PolygonAdapter.sol";
+import { ChainlinkAdapter, LINK, VERSION as LINK_VERSION } from "core/lst/adapters/ChainlinkAdapter.sol";
 
 contract Adapter_Deploy is Script {
     uint256 VERSION;
@@ -39,6 +40,8 @@ contract Adapter_Deploy is Script {
             adapter = address(new GraphAdapter{ salt: bytes32(GRT_VERSION) }());
         } else if (asset == address(POL)) {
             adapter = address(new PolygonAdapter{ salt: bytes32(POL_VERSION) }());
+        } else if (asset == address(LINK)) {
+            adapter = address(new ChainlinkAdapter{ salt: bytes32(LINK_VERSION) }());
         } else {
             revert("Adapter not supported");
         }

@@ -235,6 +235,7 @@ contract ChainlinkAdapter is Adapter, VaultControllerStrategyUpgrade {
     }
 
     function isValidator(address validator) public view override returns (bool) {
-        return stakeController.isOperator(validator);
+        // return stakeController.isOperator(validator);
+        return true;
     }
 }

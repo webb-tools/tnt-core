@@ -41,6 +41,16 @@ echo "Registry Proxy Address: $REGISTRY"
 echo "Factory Address: $FACTORY"
 # # Set up environment varifbles for the next script
 export TOKEN=$LINK_TOKEN
+export ASSET=$TOKEN
+
+# Deploy adapter 
+adapter_logs=$(forge script script/Adapter_Deploy.s.sol:Adapter_Deploy \
+--private-key $PRIVATE_KEY  \
+--rpc-url ${TENDERLY_VIRTUAL_TESTNET_RPC} \
+--etherscan-api-key $TENDERLY_ACCESS_KEY \
+--verify \
+--verifier-url ${TENDERLY_VERIFIER_URL} \
+--broadcast --slow -vvvv)
 
 # Deploy Liquifier using Factory and capture logs
 liquifier_logs=$(forge script script/XYZ_Liquifier.s.sol:XYZ_Liquifier \
