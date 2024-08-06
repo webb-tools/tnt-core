@@ -52,6 +52,11 @@ adapter_logs=$(forge script script/Adapter_Deploy.s.sol:Adapter_Deploy \
 --verifier-url ${TENDERLY_VERIFIER_URL} \
 --broadcast --slow -vvvv)
 
+# Extract Liquifier address from logs
+ADAPTER=$(echo "$adapter_logs" | awk '/Adapter Address:  /' | grep -o '0x[0-9a-fA-F]*')
+
+echo "Adapter Address: $ADAPTER"
+
 # Deploy Liquifier using Factory and capture logs
 liquifier_logs=$(forge script script/XYZ_Liquifier.s.sol:XYZ_Liquifier \
 --private-key $PRIVATE_KEY  \
@@ -73,3 +78,9 @@ export LIQUIFIER
 # liquifier_logs=$(forge script script/XYZ_Stake.s.sol:XYZ_Stake --fork-url http://127.0.0.1:8545 --broadcast --private-key $PRIVATE_KEY -vvvv)
 
 # echo "$liquifier_logs"
+
+# forge verify-contract $LIQUIFIER \
+# Liquifier \
+# --etherscan-api-key $TENDERLY_ACCESS_KEY \
+# --verifier-url $TENDERLY_VERIFIER_URL \
+# --watch

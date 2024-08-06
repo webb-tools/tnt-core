@@ -4,7 +4,7 @@
 
 pragma solidity >=0.8.19;
 
-import { Script } from "forge-std/Script.sol";
+import { Script, console2 } from "forge-std/Script.sol";
 
 import { Registry } from "core/lst/registry/Registry.sol";
 
@@ -45,6 +45,8 @@ contract Adapter_Deploy is Script {
         } else {
             revert("Adapter not supported");
         }
+
+        console2.log("Adapter Address: ", adapter);
 
         // register adapter
         registry.registerAdapter(asset, adapter);
