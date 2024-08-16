@@ -32,8 +32,8 @@ contract IncredibleSquaringBlueprint is BlueprintServiceManager {
         bytes calldata operator,
         bytes calldata _registrationInputs
     ) public payable override onlyFromRootChain {
-        // compute the operator's address from the operator's details
-        address operatorAddress = address(bytes20(keccak256(operator)));
+        // compute the operator's address from the operator's public key
+        address operatorAddress = operatorAddressFromPublicKey(operator);
         // store the operator's details
         operators[operatorAddress] = operator;
     }
@@ -52,7 +52,7 @@ contract IncredibleSquaringBlueprint is BlueprintServiceManager {
     ) public payable override onlyFromRootChain {
         // store the service instance request
         for (uint i = 0; i < operators.length; i++) {
-            address operatorAddress = address(bytes20(keccak256(operators[i])));
+            address operatorAddress = operatorAddressFromPublicKey(operators[i]);
             serviceInstances[serviceId].push(operatorAddress);
         }
     }
@@ -122,7 +122,7 @@ contract IncredibleSquaringBlueprint is BlueprintServiceManager {
         require(job == 0, "Job not found");
         // Check if the participant is a registered operator, so we can slash
         // their stake if they are cheating.
-        address operatorAddress = address(bytes20(keccak256(participant)));
+        address operatorAddress = operatorAddressFromPublicKey(participant);
         require(
             operators[operatorAddress].length > 0,
             "Operator not registered"
@@ -155,5 +155,14 @@ contract IncredibleSquaringBlueprint is BlueprintServiceManager {
             }
         }
         return false;
+    }
+
+
+    function operatorAddressFromPublicKey(bytes calldata publicKey)
+        public
+        pure
+        returns (address)
+    {
+        return address(uint160(uint256(keccak256(publicKey))));
     }
 }
