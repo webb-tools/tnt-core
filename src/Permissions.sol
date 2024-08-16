@@ -15,14 +15,13 @@ contract PermittedCaller {
 }
 
 contract RootChainEnabled {
-    address public ROOT_CHAIN;
+    /// @dev address(keccak256(pallet_services::Config::PalletId::to_account_id())[0:20])
+    address public constant ROOT_CHAIN = 0x6d6f646c70792F73727663730000000000000000;
 
-    constructor() {
-        ROOT_CHAIN = address(0x01);
-    }
-
+    /// @dev Only root chain can call this function
+    /// @notice This function can only be called by the root chain
     modifier onlyFromRootChain() {
-        require(msg.sender == ROOT_CHAIN, "Only root chain can call this function");
+        require(msg.sender == ROOT_CHAIN, "RootChain: Only root chain can call this function");
         _;
     }
 }
