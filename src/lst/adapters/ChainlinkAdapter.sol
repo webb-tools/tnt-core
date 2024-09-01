@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 
+// I think we need to refactor the code so we dont have stake controller here but elsewhere, tbd 
+// Stake controller is being used in the OperatorVCSUpgrade.sol and VaultControllerStrategyUpgrade 
+// But it is coming back as 0x000 here. so it doesnt work
+
 pragma solidity >=0.8.19;
 
 uint256 constant VERSION = 1;
@@ -13,6 +17,8 @@ import { IERC165 } from "core/lst/interfaces/IERC165.sol";
 
 import "core/lst/base/VaultControllerStrategyUpgrade.sol";
 
+import { console2 } from "forge-std/Script.sol";
+
 ERC20 constant LINK = ERC20(0x514910771AF9Ca656af840dff83E8264EcF986CA);
 Staking constant stakeController = Staking(0x3feB1e09b4bb0E7f0387CeE092a52e85797ab889);
 
@@ -25,9 +31,25 @@ contract ChainlinkAdapter is Adapter, VaultControllerStrategyUpgrade {
     event VaultAdded(address indexed operator);
     event DepositBufferedTokens(uint256 depositedAmount);
 
+    /* Stake.link doesn't use a constructor but upgradable contracts */
     /// @custom:oz-upgrades-unsafe-allow constructor
+    // constructor() {
+    //     _disableInitializers();
+    // }
+
+    // In our case, we'll want to use a construtor normally
     constructor() {
-        _disableInitializers();
+        console2.log("WE ARE CALLING THE NROMAL CONTSTRUCTOR");
+        console2.log("staking contract");
+        console2.log(address(stakeController));
+        __VaultControllerStrategy_init(
+            address(LINK),
+            address(this), // 0xb8b295df2cd735b15BE5Eb419517Aa626fc43cD5, // _stakingPool,
+            stakeController,
+            _vaultImplementation,
+            _minDepositThreshold,
+            _fees
+        );
     }
 
     struct Storage {
@@ -51,26 +73,29 @@ contract ChainlinkAdapter is Adapter, VaultControllerStrategyUpgrade {
 
     /*
      * Stake.link methods 
+     * This is typically called as a deployUpgradable, 
+     * so it won't be called in this case.
+     * const communityVCS = await deployUpgradeable('CommunityVCS', [ args ... ])
      */
-    function initialize(
-        address _token,
-        address _stakingPool,
-        address _stakeController,
-        address _vaultImplementation,
-        uint256 _minDepositThreshold,
-        Fee[] memory _fees,
-        address[] calldata _initialVaults
-    ) public initializer {
-        __VaultControllerStrategy_init(
-            _token,
-            _stakingPool,
-            _stakeController,
-            _vaultImplementation,
-            _minDepositThreshold,
-            _fees
-        );
-        // Don't bother to set up inital vaults.
-    }
+    // function initialize(
+    //     address _token,
+    //     address _stakingPool,
+    //     address _stakeController,
+    //     address _vaultImplementation,
+    //     uint256 _minDepositThreshold,
+    //     Fee[] memory _fees,
+    //     address[] calldata _initialVaults
+    // ) public initializer {
+    //     __VaultControllerStrategy_init(
+    //         _token,
+    //         _stakingPool,
+    //         _stakeController,
+    //         _vaultImplementation,
+    //         _minDepositThreshold,
+    //         _fees
+    //     );
+    //     // Don't bother to set up inital vaults.
+    // }
 
     /*
      * Liqufier methods 
@@ -210,28 +235,61 @@ contract ChainlinkAdapter is Adapter, VaultControllerStrategyUpgrade {
     }
 
     function rebase(address validator, uint256 currentStake) external returns (uint256 newStake) {
+        console2.log("What is my chainlink staking contract");
+        console2.log(address(stakeController));
+        
+        console2.log("Calling rebase on chainlink adapter");
+        console2.log("Validator");
+        console2.log(validator);
+        console2.log("Current stake");
+        console2.log(currentStake);
+        
         Storage storage $ = _loadStorage();
+        console2.log("Loading storage for rebase operation.");
         if (block.timestamp - $.lastRebaseTimestamp < 1 days) {
+            console2.log("Rebase operation not needed, returning current stake.");
             return currentStake;
         }
 
         $.lastRebaseTimestamp = block.timestamp;
+        console2.log("Updating last rebase timestamp.");
+
+        console2.log("I should be able to get the stake.");
+        console2.log(address(this));
+        uint256 stakedAmount = stakeController.getStake(address(this));
+        console2.log("This is the stake.");
+        console2.log(stakedAmount);
+
+        if (stakedAmount == 0) {
+            // The user is not a staker
+            console2.log("The contract is not yet a staker");
+            return 0;
+        } else {
+            console2.log("The contract is already a staker somehow?");
+            console2.log(stakedAmount);
+            // return 0;
+        }
 
         // Claim rewards (if any)
         uint256 baseReward = stakeController.getBaseReward(address(this));
         uint256 delegationReward = stakeController.getDelegationReward(address(this));
+        console2.log("Fetching base and delegation rewards.");
         
         if (baseReward + delegationReward > 0) {
+            console2.log("Rewards found, restaking them.");
             // Note: In the actual Chainlink staking contract, there might be a separate
             // function to claim rewards. This is a placeholder.
             // stakeController.claimRewards();
 
             // Restake rewards
             stake(validator, baseReward + delegationReward);
+        } else {
+            console2.log("No rewards to restake.");
         }
 
         // Read new stake
         newStake = stakeController.getStake(address(this));
+        console2.log("Fetching new stake after rebase operation.");
     }
 
     function isValidator(address validator) public view override returns (bool) {
