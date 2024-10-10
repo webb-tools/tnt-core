@@ -3,6 +3,7 @@ pragma solidity >=0.7.0 <0.9.0;
 
 import "forge-std/Test.sol";
 import "core/Proxy.sol";
+import "core/Singleton.sol";
 
 contract MockContract is Singleton {
     uint256 private value;
