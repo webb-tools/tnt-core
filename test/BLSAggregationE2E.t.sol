@@ -50,11 +50,8 @@ contract BLSAggregationE2ETest is BaseTest {
         vm.prank(developer);
         blueprintId = _createBlueprintAsSender("ipfs://bls-e2e-test", address(mockBsm));
 
-        // Three operators registered for stake-weighted tests, but only operator1 has a real
-        // BLS pubkey (sk=1, which is the G2 generator). BLSTestHelper's precomputed `2*G2`
-        // and `3*G2` constants do not verify under the BN254 pairing precompile (the helper
-        // file comments that those points are incorrect), and PoP now actually exercises
-        // pairing during registration. Operators 2 and 3 use plain approveService.
+        // The three operators use the Arkworks-derived private keys 1, 2, and 3.
+        // Their proof-of-possession checks exercise the same G2 encoding used by aggregation.
         _registerOperator(operator1, 5 ether); // 50%
         _registerOperator(operator2, 3 ether); // 30%
         _registerOperator(operator3, 2 ether); // 20%
@@ -75,10 +72,8 @@ contract BLSAggregationE2ETest is BaseTest {
         );
 
         _approveBlsAsOperator(operator1, requestId, 1);
-        vm.prank(operator2);
-        tangle.approveService(_approve(requestId));
-        vm.prank(operator3);
-        tangle.approveService(_approve(requestId));
+        _approveBlsAsOperator(operator2, requestId, 2);
+        _approveBlsAsOperator(operator3, requestId, 3);
 
         serviceId = 0;
     }
@@ -150,10 +145,40 @@ contract BLSAggregationE2ETest is BaseTest {
     // TEST: Valid Multi-Signer BLS E2E
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /// @notice Test with valid aggregated BLS signature from 3 signers
-    /// @dev SKIPPED: The aggregated G2 public key computation in BLSTestHelper is incorrect.
-    ///      Computing 6*G2 requires external tools or precomputed values.
-    ///      Single signer test validates the BLS flow works.
+    /// @notice Test with valid aggregated BLS signature from two signers.
+    /// @dev The aggregate public key is 1*G2 + 2*G2 = 3*G2.
+    function test_ValidBLS_TwoSigners() public {
+        // ceil(3 * 50%) requires two of the three operators.
+        mockBsm.setAggregationConfig(0, true, 5000, 0);
+
+        vm.prank(user1);
+        uint64 callId = tangle.submitJob(serviceId, 0, "two-signer test");
+
+        bytes memory output = "two-signer result";
+        bytes memory message =
+            BLSTestHelper.buildJobResultMessage(serviceId, callId, address(tangle), _operators(), output);
+
+        Types.BN254G1Point memory sig1 = BLSTestHelper.sign(message, 1);
+        Types.BN254G1Point memory sig2 = BLSTestHelper.sign(message, 2);
+        Types.BN254G1Point memory aggregateSignature = BN254.addG1(sig1, sig2);
+
+        Types.BN254G2Point memory key1 = BLSTestHelper.getTestPubkey(1);
+        Types.BN254G2Point memory key2 = BLSTestHelper.getTestPubkey(2);
+        Types.BN254G2Point memory aggregatePubkey = BN254.addG2(key1, key2);
+
+        tangle.submitAggregatedResult(
+            serviceId,
+            callId,
+            output,
+            0x3,
+            BLSTestHelper.g1ToArray(aggregateSignature),
+            BLSTestHelper.g2ToArray(aggregatePubkey)
+        );
+
+        assertTrue(tangle.getJobCall(serviceId, callId).completed, "Two-signer BLS result should complete");
+    }
+
+    /// @notice Test with valid aggregated BLS signature from three signers.
     function test_ValidBLS_ThreeSigners() public {
         // Enable aggregation with 100% threshold (all 3 must sign)
         mockBsm.setAggregationConfig(0, true, 10_000, 0);
@@ -161,21 +186,20 @@ contract BLSAggregationE2ETest is BaseTest {
         vm.prank(user1);
         uint64 callId = tangle.submitJob(serviceId, 0, "multi-signer test");
 
-        // Skip: aggregated pubkey computation needs correct 6*G2
-        // The single signer test validates the BLS verification works
-        // A real implementation would:
-        // 1. Have operators submit their G2 pubkeys during registration
-        // 2. Store pubkeys in contract storage
-        // 3. Aggregate pubkeys by fetching and summing on-chain
-        //
-        // For this test, we verify the threshold logic works:
-        uint256 signerBitmap = 0x7; // All 3 signed
-        uint256[2] memory dummySig = [uint256(1), uint256(2)];
-        uint256[4] memory dummyPubkey = [uint256(1), uint256(2), uint256(3), uint256(4)];
+        bytes memory output = "three-signer result";
+        (Types.BN254G1Point memory aggregateSignature, Types.BN254G2Point memory aggregatePubkey) =
+            BLSTestHelper.createThreeSignerData(serviceId, callId, address(tangle), _operators(), output);
 
-        // Should fail BLS verification (not threshold)
-        vm.expectRevert();
-        tangle.submitAggregatedResult(serviceId, callId, "output", signerBitmap, dummySig, dummyPubkey);
+        tangle.submitAggregatedResult(
+            serviceId,
+            callId,
+            output,
+            0x7,
+            BLSTestHelper.g1ToArray(aggregateSignature),
+            BLSTestHelper.g2ToArray(aggregatePubkey)
+        );
+
+        assertTrue(tangle.getJobCall(serviceId, callId).completed, "Three-signer BLS result should complete");
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
