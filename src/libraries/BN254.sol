@@ -30,7 +30,8 @@ library BN254 {
     /// @notice G1 generator y coordinate
     uint256 internal constant G1_Y = 2;
 
-    /// @notice G2 generator x coordinates (x = x0 * i + x1)
+    /// @notice G2 coordinates use EIP-197 order [imaginary, real].
+    /// @dev The field element is x = x[1] + x[0] * i (and likewise for y).
     uint256 internal constant G2_X0 =
         11_559_732_032_986_387_107_991_004_021_392_285_783_925_812_861_821_192_530_917_403_151_452_391_805_634;
     uint256 internal constant G2_X1 =
@@ -264,30 +265,28 @@ library BN254 {
     // FP2 ARITHMETIC (Extension Field: Fp2 = Fp[i]/(i^2 + 1))
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /// @notice Add two Fp2 elements: (a0 + a1*i) + (b0 + b1*i)
+    /// @notice Add two EIP-197 Fp2 elements stored as [imaginary, real].
     function fp2Add(uint256 a0, uint256 a1, uint256 b0, uint256 b1) internal pure returns (uint256 c0, uint256 c1) {
         c0 = addmod(a0, b0, P_MOD);
         c1 = addmod(a1, b1, P_MOD);
     }
 
-    /// @notice Subtract two Fp2 elements: (a0 + a1*i) - (b0 + b1*i)
+    /// @notice Subtract two EIP-197 Fp2 elements stored as [imaginary, real].
     function fp2Sub(uint256 a0, uint256 a1, uint256 b0, uint256 b1) internal pure returns (uint256 c0, uint256 c1) {
         c0 = addmod(a0, P_MOD - (b0 % P_MOD), P_MOD);
         c1 = addmod(a1, P_MOD - (b1 % P_MOD), P_MOD);
     }
 
-    /// @notice Multiply two Fp2 elements: (a0 + a1*i) * (b0 + b1*i)
-    /// @dev Using i^2 = -1: result = (a0*b0 - a1*b1) + (a0*b1 + a1*b0)*i
+    /// @notice Multiply two EIP-197 Fp2 elements stored as [imaginary, real].
+    /// @dev For a = a1 + a0*i and b = b1 + b0*i, i^2 = -1.
     function fp2Mul(uint256 a0, uint256 a1, uint256 b0, uint256 b1) internal pure returns (uint256 c0, uint256 c1) {
-        uint256 a0b0 = mulmod(a0, b0, P_MOD);
-        uint256 a1b1 = mulmod(a1, b1, P_MOD);
-        uint256 a0b1 = mulmod(a0, b1, P_MOD);
-        uint256 a1b0 = mulmod(a1, b0, P_MOD);
+        uint256 arbr = mulmod(a1, b1, P_MOD);
+        uint256 aibi = mulmod(a0, b0, P_MOD);
+        uint256 arbi = mulmod(a1, b0, P_MOD);
+        uint256 aibr = mulmod(a0, b1, P_MOD);
 
-        // c0 = a0*b0 - a1*b1 (using i^2 = -1)
-        c0 = addmod(a0b0, P_MOD - a1b1, P_MOD);
-        // c1 = a0*b1 + a1*b0
-        c1 = addmod(a0b1, a1b0, P_MOD);
+        c0 = addmod(arbi, aibr, P_MOD);
+        c1 = addmod(arbr, P_MOD - aibi, P_MOD);
     }
 
     /// @notice Multiply Fp2 element by a scalar
@@ -296,26 +295,23 @@ library BN254 {
         c1 = mulmod(a1, s, P_MOD);
     }
 
-    /// @notice Negate an Fp2 element: -(a0 + a1*i) = -a0 - a1*i
+    /// @notice Negate an EIP-197 Fp2 element stored as [imaginary, real].
     function fp2Negate(uint256 a0, uint256 a1) internal pure returns (uint256 c0, uint256 c1) {
         c0 = a0 == 0 ? 0 : P_MOD - (a0 % P_MOD);
         c1 = a1 == 0 ? 0 : P_MOD - (a1 % P_MOD);
     }
 
-    /// @notice Compute the inverse of an Fp2 element
-    /// @dev For a = a0 + a1*i, a^(-1) = (a0 - a1*i) / (a0^2 + a1^2)
+    /// @notice Compute the inverse of an EIP-197 Fp2 element.
+    /// @dev For a = a1 + a0*i, a^(-1) = (a1 - a0*i) / (a1^2 + a0^2).
     function fp2Inverse(uint256 a0, uint256 a1) internal pure returns (uint256 c0, uint256 c1) {
-        // Compute norm = a0^2 + a1^2 (using i^2 = -1)
-        uint256 a0_sq = mulmod(a0, a0, P_MOD);
-        uint256 a1_sq = mulmod(a1, a1, P_MOD);
-        uint256 norm = addmod(a0_sq, a1_sq, P_MOD);
+        uint256 ai_sq = mulmod(a0, a0, P_MOD);
+        uint256 ar_sq = mulmod(a1, a1, P_MOD);
+        uint256 norm = addmod(ai_sq, ar_sq, P_MOD);
 
-        // Compute norm^(-1) in Fp using Fermat's little theorem
         uint256 normInv = expMod(norm, P_MOD - 2, P_MOD);
 
-        // a^(-1) = (a0 - a1*i) * normInv = (a0 * normInv) + (-a1 * normInv)*i
-        c0 = mulmod(a0, normInv, P_MOD);
-        c1 = mulmod(P_MOD - (a1 % P_MOD), normInv, P_MOD);
+        c0 = mulmod(P_MOD - (a0 % P_MOD), normInv, P_MOD);
+        c1 = mulmod(a1, normInv, P_MOD);
     }
 
     /// @notice Divide two Fp2 elements: a / b = a * b^(-1)
