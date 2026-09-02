@@ -9,9 +9,9 @@ license = "MIT"
 
 [workspace.dependencies]
 # SP1 dependencies
-sp1-zkvm = "6.1.0"
-sp1-sdk = { version = "6.1.0", features = ["blocking"] }
-sp1-helper = "6.1.0"
+sp1-zkvm = "6.5.0"
+sp1-sdk = { version = "6.5.0", features = ["blocking"] }
+sp1-helper = "6.5.0"
 
 # Cryptography - disable default features to avoid getrandom/std pulling in networking
 schnorrkel = { version = "0.11", default-features = false, features = ["alloc"] }
