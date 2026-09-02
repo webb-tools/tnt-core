@@ -70,7 +70,7 @@ fn parse_hex_bytes<const N: usize>(s: &str) -> Result<[u8; N]> {
 
 fn parse_u256_string(s: &str) -> Result<[u8; 32]> {
     // Parse decimal string to U256 and convert to big-endian bytes
-    let value: primitive_types::U256 = s.parse().context("Invalid U256 string")?;
+    let value = primitive_types::U256::from_dec_str(s).context("Invalid U256 string")?;
     let mut bytes = [0u8; 32];
     value.to_big_endian(&mut bytes);
     Ok(bytes)
