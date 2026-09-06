@@ -1,186 +1,22 @@
-# CLAUDE.md
+# TNT Core
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This repository owns the staking and service contracts, their indexer, and generated Rust bindings.
+Read the relevant source before changing a protocol boundary; copied contract trees are not the architecture.
+Start contract work at [Tangle](src/Tangle.sol), its [shared state](src/core/Base.sol), and the [facet router](src/facets/FacetRouterBase.sol).
+Preserve upgrade authorization, storage compatibility, share accounting, and event contracts consumed by the indexer.
+Financial logic requires meaningful fuzz or invariant tests as well as the affected user flow.
 
-## Project Overview
+## Checks and generated artifacts
 
-tnt-core is Tangle's EVM-native staking protocol for creating service blueprints. It contains Solidity smart contracts, a TypeScript Envio indexer, and Rust bindings.
+Use [foundry.toml](foundry.toml) and [contract CI](.github/workflows/foundry.yml) for supported build and test profiles.
+The `local_build` profile excludes tests; a passing build does not prove contract correctness.
+Use the `fast` profile for local correctness tests with normal constructor semantics.
+Check deployable sizes with the production-codegen profile described in CI.
 
-## Build & Test Commands
+For indexer changes, inspect [its scripts](indexer/package.json) and regenerate types when the schema or event contract changes.
+For binding changes, read [xtask](xtask/README.md) and [binding guidance](bindings/README.md).
+Regenerate bindings from the intended contract revision and retain their source-revision evidence.
+Do not hand-edit generated bindings or substitute a moving revision for release provenance.
 
-### Solidity (Foundry)
-
-```bash
-# Install dependencies
-forge soldeer update
-
-# Fast local build without tests/scripts
-FOUNDRY_PROFILE=local_build forge build
-
-# Full contract build
-forge build
-
-# Run all tests
-forge test
-
-# Run specific test file
-forge test --match-path test/Tangle.t.sol
-
-# Run single test function
-forge test --match-test testServiceRequest
-
-# Coverage
-./coverage.sh
-
-# Format
-forge fmt
-```
-
-### Indexer (TypeScript/Envio)
-
-```bash
-cd indexer
-npm install
-npm run codegen     # Generate types from schema
-npm run dev         # Start with hot reload
-npm run build       # TypeScript compile
-npm run test        # Run unit tests
-```
-
-### Rust Bindings
-
-```bash
-# Regenerate bindings after contract changes
-cargo xtask gen-bindings
-
-# Bump version and publish
-cargo xtask bump-version 0.3.0
-cargo xtask publish
-```
-
-## Architecture
-
-### Core Contract Structure
-
-The protocol uses a mixin pattern where `Tangle.sol` composes all functionality:
-
-```
-src/Tangle.sol          # Main entry point, composes mixins
-src/core/
-├── Base.sol                     # Shared state, access control, UUPS upgrade
-├── BlueprintsCreate.sol         # Blueprint registration
-├── BlueprintsManage.sol         # Blueprint params/job metadata management
-├── Operators.sol                # Operator management
-├── ServicesRequests.sol         # Service request creation
-├── ServicesApprovals.sol        # Owner/operator approvals
-├── ServicesLifecycle.sol        # Activation, join/leave, termination
-├── JobsSubmission.sol           # Event-driven job submission
-├── JobsAggregation.sol          # Aggregation job paths
-├── JobsRFQ.sol                  # RFQ quote accept/execute
-├── Payments.sol                 # Payment processing and escrow billing
-├── PaymentsEffectiveExposure.sol # Exposure helpers for payment routing
-├── Slashing.sol                 # Slashing with dispute window
-├── QuotesCreate.sol             # Quote service creation
-└── QuotesExtend.sol             # Quote service extension
-```
-
-### Staking Layer
-
-Pluggable staking backend via `IStaking` interface:
-
-```
-src/staking/
-├── MultiAssetDelegation.sol    # Native O(1) share accounting
-├── OperatorManager.sol         # Operator status tracking
-├── SlashingManager.sol         # Slashing execution
-├── LiquidDelegationVault.sol   # ERC-7540 vault for liquid staking
-└── RewardsManager.sol          # Reward distribution
-```
-
-### Blueprint Service Managers
-
-```
-src/MasterBlueprintServiceManager.sol  # Manages MBSM versions
-src/MBSMRegistry.sol                    # Version registry
-src/BlueprintServiceManagerBase.sol     # Base for custom BSMs
-```
-
-### Key Abstractions
-
-- **Blueprint**: Template defining a service type, created by developers
-- **Service**: Running instance of a blueprint with assigned operators
-- **Operator**: Staked entity running services
-- **Job**: Task submitted to a service
-
-### Governance
-
-```
-src/governance/
-├── TangleToken.sol      # ERC20Votes governance token
-├── TangleGovernor.sol   # OpenZeppelin Governor
-└── TangleTimelock.sol   # Timelock controller
-```
-
-### Beacon Chain Integration
-
-Native ETH staking via validator pods:
-
-```
-src/beacon/
-├── ValidatorPod.sol           # Per-operator validator management
-├── ValidatorPodManager.sol    # Pod factory
-├── BeaconChainProofs.sol      # Merkle proof verification
-└── bridges/                   # Cross-chain messaging (Arbitrum, Base, LayerZero, Hyperlane)
-```
-
-## Testing
-
-Tests are in `test/` and use `BaseTest.sol` as the foundation. Key test patterns:
-
-- Unit tests: `test/tangle/`, `test/staking/`, `test/blueprints/`
-- Integration: `test/Integration.t.sol`, `test/scenario/FullStackScenario.t.sol`
-- Fuzz tests: `test/fuzz/`
-- Beacon tests: `test/beacon/`
-
-## Deployment
-
-Config-driven deployment via `script/FullDeploy.s.sol`:
-
-```bash
-export PRIVATE_KEY=0x...
-export FULL_DEPLOY_CONFIG=deploy/config/base-sepolia.example.json
-forge script script/FullDeploy.s.sol:FullDeploy --rpc-url $RPC_URL --broadcast --slow
-```
-
-Local development:
-```bash
-scripts/local-env/start-local-env.sh
-```
-
-## Key Environment Variables
-
-- `OPERATOR_BOND_TOKEN` / `TNT_TOKEN`: TNT ERC20 address for operator bonds
-- `OPERATOR_BOND_AMOUNT`: Bond amount in wei (default 100 TNT)
-- `FULL_DEPLOY_CONFIG`: Path to deployment config JSON
-
-## Tech Stack
-
-- Solidity 0.8.26, Cancun EVM, via-IR enabled
-- Foundry with soldeer for dependency management
-- OpenZeppelin 5.x for access control, upgrades, governance
-- alloy-rs for Rust bindings
-
-## Key Conventions
-
-- All core contracts are upgradeable (UUPS pattern)
-- O(1) share-based accounting for delegations
-- Events over storage for gas optimization
-- Fuzz testing required for financial logic
-
-## Commit Messages
-
-- No `Co-Authored-By` lines ever — not in any commit, in any repo
-
-## Pull Requests
-
-- Before opening any PR, always resolve merge conflicts locally first: create a merge branch, run `git merge <target>`, fix all conflicts, verify lint/tests/build pass, push the resolved branch, THEN open the PR. Never open a PR that has conflicts.
+Before deployment, read the [deployment runbook](docs/DEPLOYMENT_RUNBOOK.md), the relevant network configuration, and [blueprint upgrade guidance](docs/UPGRADING_BLUEPRINTS.md).
+Verify the target network, contract addresses, signer authority, and rollback or upgrade procedure before broadcasting.
